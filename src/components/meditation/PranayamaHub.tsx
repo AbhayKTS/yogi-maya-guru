@@ -250,8 +250,8 @@ export const PranayamaHub = () => {
 
         {/* Timer Display */}
         <Card className="card-golden">
-          <CardContent className="p-8 text-center text-secondary-foreground">
-            <div className="text-6xl font-mono mb-4">
+          <CardContent className="p-8 text-center">
+            <div className="text-6xl font-mono mb-4 text-foreground">
               {formatTime(timeRemaining)}
             </div>
             <Progress 
@@ -262,7 +262,7 @@ export const PranayamaHub = () => {
               <Button
                 onClick={togglePlayPause}
                 size="lg"
-                className="rounded-full w-16 h-16 bg-white/20 hover:bg-white/30 text-secondary-foreground"
+                className="rounded-full w-16 h-16 bg-primary/20 hover:bg-primary/30 text-foreground border-0"
               >
                 {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
               </Button>
@@ -270,7 +270,7 @@ export const PranayamaHub = () => {
                 onClick={resetSession}
                 size="lg"
                 variant="outline"
-                className="rounded-full w-16 h-16 bg-white/10 border-white/20 text-secondary-foreground hover:bg-white/20"
+                className="rounded-full w-16 h-16 bg-background/20 border-foreground/20 text-foreground hover:bg-background/30"
               >
                 <RotateCcw className="w-6 h-6" />
               </Button>
@@ -278,7 +278,7 @@ export const PranayamaHub = () => {
                 onClick={() => setIsMuted(!isMuted)}
                 size="lg"
                 variant="outline"
-                className="rounded-full w-16 h-16 bg-white/10 border-white/20 text-secondary-foreground hover:bg-white/20"
+                className="rounded-full w-16 h-16 bg-background/20 border-foreground/20 text-foreground hover:bg-background/30"
               >
                 {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
               </Button>
@@ -443,11 +443,11 @@ export const PranayamaHub = () => {
 
       {/* Daily Recommendation */}
       <Card className="card-golden">
-        <CardContent className="p-6 text-secondary-foreground">
-          <h3 className="text-lg font-semibold mb-2">
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-2 text-foreground">
             Today's Recommendation for {doshaInfo.sanskrit}
           </h3>
-          <p className="text-secondary-foreground/80 mb-4">
+          <p className="text-foreground/80 mb-4">
             {dominantDosha === 'vata' 
               ? 'Focus on calming and grounding breathwork to balance your naturally active energy.'
               : dominantDosha === 'pitta'
@@ -457,8 +457,8 @@ export const PranayamaHub = () => {
           </p>
           <Button 
             variant="outline" 
-            className="bg-white/10 border-white/20 text-secondary-foreground hover:bg-white/20"
-            onClick={() => startSession(techniques[0], 'pranayama')}
+            className="bg-primary/20 border-primary/30 text-foreground hover:bg-primary/30 font-medium"
+            onClick={() => techniques.length > 0 && startSession(techniques[0], 'pranayama')}
           >
             Start Recommended Practice
           </Button>

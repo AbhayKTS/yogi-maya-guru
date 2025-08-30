@@ -182,8 +182,8 @@ All colors MUST be HSL. Sacred geometry and spiritual aesthetics.
   }
 
   .card-golden {
-    @apply bg-[var(--gradient-golden)] border border-gold/20 rounded-2xl 
-           shadow-[var(--shadow-golden)] text-secondary-foreground;
+    @apply bg-gradient-to-br from-gold to-secondary border border-gold/20 rounded-2xl 
+           shadow-[var(--shadow-golden)] text-foreground;
   }
 
   .card-spiritual {
