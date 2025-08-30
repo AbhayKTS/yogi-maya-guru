@@ -239,7 +239,10 @@ export const Dashboard = () => {
                   Today's Sacred Insights
                 </h3>
                 <p className="text-white/90 mb-4">
-                  Personalized guidance based on your {dominantDosha || 'unique'} constitution and cosmic influences
+                  {dominantDosha 
+                    ? `Personalized guidance based on your ${dominantDosha} constitution and cosmic influences`
+                    : 'Discover personalized wellness guidance based on your unique constitution and cosmic influences'
+                  }
                 </p>
                 <Button 
                   variant="outline" 
