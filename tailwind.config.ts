@@ -26,12 +26,29 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))',
+					deep: 'hsl(var(--primary-deep))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
+				gold: {
+					DEFAULT: 'hsl(var(--gold))',
+					deep: 'hsl(var(--gold-deep))'
+				},
+				earth: {
+					DEFAULT: 'hsl(var(--earth))',
+					deep: 'hsl(var(--earth-deep))'
+				},
+				spiritual: 'hsl(var(--spiritual))',
+				wisdom: 'hsl(var(--wisdom))',
+				healing: {
+					DEFAULT: 'hsl(var(--healing))',
+					soft: 'hsl(var(--healing-soft))'
+				},
+				nature: 'hsl(var(--nature))',
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'

@@ -2,41 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Ayur.AI Guru Design System - Vedic Wellness Inspired
+All colors MUST be HSL. Sacred geometry and spiritual aesthetics.
 */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Sacred Color Palette */
+    --background: 42 15% 97%;                    /* Warm cream, like temple marble */
+    --foreground: 15 25% 15%;                    /* Deep brown, like sacred earth */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 40 30% 98%;                          /* Pure lotus white */
+    --card-foreground: 15 25% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 40 30% 98%;
+    --popover-foreground: 15 25% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Saffron & Sacred Orange Tones */
+    --primary: 25 85% 55%;                       /* Sacred saffron */
+    --primary-foreground: 42 15% 97%;
+    --primary-glow: 30 90% 65%;                  /* Glowing saffron */
+    --primary-deep: 20 80% 45%;                  /* Deep saffron */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Golden Lotus Accents */
+    --secondary: 45 95% 88%;                     /* Golden lotus */
+    --secondary-foreground: 15 25% 15%;
+    --gold: 48 100% 70%;                         /* Pure gold */
+    --gold-deep: 45 85% 50%;                     /* Deep gold */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Healing Earth Tones */
+    --muted: 42 20% 92%;                         /* Soft earth */
+    --muted-foreground: 30 15% 45%;
+    --earth: 35 25% 75%;                         /* Warm earth */
+    --earth-deep: 30 30% 55%;                    /* Deep earth */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Spiritual Purple & Indigo */
+    --accent: 255 85% 70%;                       /* Third eye indigo */
+    --accent-foreground: 42 15% 97%;
+    --spiritual: 270 60% 55%;                    /* Deep spiritual purple */
+    --wisdom: 245 70% 65%;                       /* Wisdom violet */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Healing Green (Ayurvedic) */
+    --healing: 140 60% 60%;                      /* Healing herb green */
+    --healing-soft: 145 40% 85%;                 /* Soft healing green */
+    --nature: 120 50% 50%;                       /* Nature green */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* System Colors */
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 42 15% 97%;
 
-    --radius: 0.5rem;
+    --border: 42 25% 88%;
+    --input: 42 25% 90%;
+    --ring: 25 85% 55%;
+
+    --radius: 0.75rem;
+
+    /* Sacred Gradients */
+    --gradient-sunrise: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-golden: linear-gradient(135deg, hsl(var(--gold)), hsl(var(--secondary)));
+    --gradient-spiritual: linear-gradient(135deg, hsl(var(--spiritual)), hsl(var(--wisdom)));
+    --gradient-earth: linear-gradient(135deg, hsl(var(--earth)), hsl(var(--healing-soft)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 50%, hsl(var(--gold)) 100%);
+
+    /* Sacred Shadows */
+    --shadow-soft: 0 4px 20px hsl(var(--primary) / 0.1);
+    --shadow-warm: 0 8px 30px hsl(var(--primary) / 0.15);
+    --shadow-golden: 0 10px 40px hsl(var(--gold) / 0.2);
+    --shadow-spiritual: 0 6px 25px hsl(var(--spiritual) / 0.12);
+
+    /* Sacred Animations */
+    --transition-sacred: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-gentle: all 0.3s ease-out;
+    --transition-swift: all 0.2s ease;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +139,104 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
+
+  .font-devanagari {
+    font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  /* Sacred Button Variants */
+  .btn-hero {
+    @apply bg-[var(--gradient-hero)] text-primary-foreground shadow-[var(--shadow-warm)] 
+           hover:shadow-[var(--shadow-golden)] transition-[var(--transition-sacred)]
+           border-0 rounded-xl px-8 py-4 font-semibold text-lg;
+  }
+
+  .btn-sacred {
+    @apply bg-primary text-primary-foreground shadow-[var(--shadow-soft)]
+           hover:bg-primary/90 hover:shadow-[var(--shadow-warm)] 
+           transition-[var(--transition-gentle)] rounded-lg;
+  }
+
+  .btn-spiritual {
+    @apply bg-[var(--gradient-spiritual)] text-accent-foreground shadow-[var(--shadow-spiritual)]
+           hover:shadow-[var(--shadow-warm)] transition-[var(--transition-sacred)]
+           border-0 rounded-lg;
+  }
+
+  .btn-earth {
+    @apply bg-[var(--gradient-earth)] text-foreground shadow-[var(--shadow-soft)]
+           hover:shadow-[var(--shadow-warm)] transition-[var(--transition-gentle)]
+           border-0 rounded-lg;
+  }
+
+  /* Sacred Card Variants */
+  .card-sacred {
+    @apply bg-card border border-border/50 rounded-2xl shadow-[var(--shadow-soft)]
+           hover:shadow-[var(--shadow-warm)] transition-[var(--transition-gentle)]
+           backdrop-blur-sm;
+  }
+
+  .card-golden {
+    @apply bg-[var(--gradient-golden)] border border-gold/20 rounded-2xl 
+           shadow-[var(--shadow-golden)] text-secondary-foreground;
+  }
+
+  .card-spiritual {
+    @apply bg-[var(--gradient-spiritual)] border border-spiritual/20 rounded-2xl
+           shadow-[var(--shadow-spiritual)] text-accent-foreground;
+  }
+
+  /* Sacred Text Styles */
+  .text-sacred {
+    @apply text-primary font-semibold;
+  }
+
+  .text-wisdom {
+    @apply text-spiritual font-medium;
+  }
+
+  .text-earth {
+    @apply text-earth-deep;
+  }
+
+  .text-sanskrit {
+    @apply font-devanagari text-primary text-lg leading-relaxed;
+  }
+
+  .text-transliteration {
+    @apply text-muted-foreground italic font-medium;
+  }
+
+  /* Sacred Animations */
+  .animate-sacred-glow {
+    animation: sacred-glow 3s ease-in-out infinite alternate;
+  }
+
+  .animate-gentle-float {
+    animation: gentle-float 6s ease-in-out infinite;
+  }
+
+  .animate-wisdom-pulse {
+    animation: wisdom-pulse 4s ease-in-out infinite;
+  }
+}
+
+@keyframes sacred-glow {
+  0% { box-shadow: var(--shadow-soft); }
+  100% { box-shadow: var(--shadow-golden); }
+}
+
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes wisdom-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
 }
