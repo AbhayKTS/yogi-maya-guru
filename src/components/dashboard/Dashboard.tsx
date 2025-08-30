@@ -25,7 +25,7 @@ import { YogaStudio } from '@/components/yoga/YogaStudio';
 import { TodayInsights } from '@/components/insights/TodayInsights';
 import heroTemple from '@/assets/hero-temple.jpg';
 
-type DashboardView = 'home' | 'wisdom' | 'yoga' | 'nutrition' | 'pranayama' | 'insights';
+type DashboardView = 'home' | 'wisdom' | 'yoga' | 'nutrition' | 'pranayama' | 'insights' | 'ranks';
 
 export const Dashboard = () => {
   const { profile } = useAuth();
@@ -96,6 +96,55 @@ export const Dashboard = () => {
             <DashboardHeader />
             <main className="container mx-auto px-4 py-8">
               <TodayInsights />
+            </main>
+            {backButton}
+          </div>
+        );
+      case 'ranks':
+        return (
+          <div>
+            <DashboardHeader />
+            <main className="container mx-auto px-4 py-8">
+              <div className="space-y-6">
+                <div className="text-center space-y-4">
+                  <h1 className="text-3xl font-bold text-sacred">
+                    Spiritual Rank System
+                  </h1>
+                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                    Progress through sacred ranks by earning Sadhana Points through dedicated practice
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Object.entries(RANK_INFO).map(([key, rank]) => (
+                    <Card 
+                      key={key} 
+                      className={`card-sacred ${currentRank === key ? 'ring-2 ring-primary' : ''}`}
+                    >
+                      <CardContent className="p-6 text-center space-y-4">
+                        <div className="text-3xl font-devanagari text-primary">
+                          {rank.sanskrit}
+                        </div>
+                        <div className="text-xl font-bold text-sacred">
+                          {rank.title}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {rank.description}
+                        </p>
+                        <div className="text-sm">
+                          <span className="font-semibold">Required: </span>
+                          <span className="text-primary">{rank.pointsRequired} SP</span>
+                        </div>
+                        {currentRank === key && (
+                          <Badge className="bg-primary text-primary-foreground">
+                            Current Rank
+                          </Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             </main>
             {backButton}
           </div>
@@ -352,11 +401,14 @@ export const Dashboard = () => {
           {/* Right Column - Progress & Quick Actions */}
           <div className="space-y-6">
             {/* Rank Progress */}
-            <Card className="card-sacred">
+            <Card 
+              className="card-sacred cursor-pointer hover:shadow-lg transition-all"
+              onClick={() => setCurrentView('ranks')}
+            >
               <CardHeader>
                 <CardTitle className="text-center">Your Spiritual Rank</CardTitle>
               </CardHeader>
-              <CardContent className="text-center space-y-4">
+              <CardContent className="p-6 text-center space-y-4">
                 <div className="text-4xl font-devanagari text-primary">
                   {rankInfo.sanskrit}
                 </div>
@@ -375,6 +427,10 @@ export const Dashboard = () => {
                   </div>
                   <Progress value={((profile?.sadhana_points || 0) / 1000) * 100} />
                 </div>
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  Click to view all ranks →
+                </p>
               </CardContent>
             </Card>
 
