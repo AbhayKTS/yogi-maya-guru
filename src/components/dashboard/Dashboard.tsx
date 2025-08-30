@@ -19,9 +19,13 @@ import {
 } from 'lucide-react';
 import { DOSHA_INFO, RANK_INFO } from '@/types';
 import { DailyWisdomPage } from '@/components/wisdom/DailyWisdomPage';
+import { NutritionGuide } from '@/components/nutrition/NutritionGuide';
+import { PranayamaHub } from '@/components/meditation/PranayamaHub';
+import { YogaStudio } from '@/components/yoga/YogaStudio';
+import { TodayInsights } from '@/components/insights/TodayInsights';
 import heroTemple from '@/assets/hero-temple.jpg';
 
-type DashboardView = 'home' | 'wisdom' | 'yoga' | 'nutrition' | 'pranayama';
+type DashboardView = 'home' | 'wisdom' | 'yoga' | 'nutrition' | 'pranayama' | 'insights';
 
 export const Dashboard = () => {
   const { profile } = useAuth();
@@ -33,22 +37,76 @@ export const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (currentView === 'wisdom') {
-    return (
-      <div>
-        <DashboardHeader />
-        <DailyWisdomPage />
-        <div className="fixed bottom-6 left-6">
-          <Button
-            onClick={() => setCurrentView('home')}
-            variant="outline"
-            className="bg-card/80 backdrop-blur-sm"
-          >
-            ← Back to Dashboard
-          </Button>
-        </div>
+  // Handle different view states
+  const renderViewContent = () => {
+    const backButton = (
+      <div className="fixed bottom-6 left-6 z-50">
+        <Button
+          onClick={() => setCurrentView('home')}
+          variant="outline"
+          className="bg-card/80 backdrop-blur-sm"
+        >
+          ← Back to Dashboard
+        </Button>
       </div>
     );
+
+    switch (currentView) {
+      case 'wisdom':
+        return (
+          <div>
+            <DashboardHeader />
+            <DailyWisdomPage />
+            {backButton}
+          </div>
+        );
+      case 'yoga':
+        return (
+          <div>
+            <DashboardHeader />
+            <main className="container mx-auto px-4 py-8">
+              <YogaStudio />
+            </main>
+            {backButton}
+          </div>
+        );
+      case 'nutrition':
+        return (
+          <div>
+            <DashboardHeader />
+            <main className="container mx-auto px-4 py-8">
+              <NutritionGuide />
+            </main>
+            {backButton}
+          </div>
+        );
+      case 'pranayama':
+        return (
+          <div>
+            <DashboardHeader />
+            <main className="container mx-auto px-4 py-8">
+              <PranayamaHub />
+            </main>
+            {backButton}
+          </div>
+        );
+      case 'insights':
+        return (
+          <div>
+            <DashboardHeader />
+            <main className="container mx-auto px-4 py-8">
+              <TodayInsights />
+            </main>
+            {backButton}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (currentView !== 'home') {
+    return renderViewContent();
   }
 
   const dominantDosha = profile?.dominant_dosha;
@@ -165,6 +223,31 @@ export const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Today's Insights Preview */}
+        <Card 
+          className="card-spiritual cursor-pointer hover:shadow-lg transition-all"
+          onClick={() => setCurrentView('insights')}
+        >
+          <CardContent className="p-6 text-accent-foreground">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-white/20">
+                <Sparkles className="w-8 h-8" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold mb-2">
+                  Today's Sacred Insights
+                </h3>
+                <p className="opacity-90 mb-4">
+                  Personalized guidance based on your {dominantDosha} constitution and cosmic influences
+                </p>
+                <Button variant="outline" className="bg-white/10 border-white/20 text-accent-foreground hover:bg-white/20">
+                  View All Insights →
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

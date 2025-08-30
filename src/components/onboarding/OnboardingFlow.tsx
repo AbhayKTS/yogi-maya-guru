@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { DoshaAssessment } from './DoshaAssessment';
+import { AstrologicalProfile } from './AstrologicalProfile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -13,12 +14,16 @@ interface OnboardingFlowProps {
 }
 
 export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
-  const [currentStep, setCurrentStep] = useState<'welcome' | 'dosha' | 'complete'>('welcome');
+  const [currentStep, setCurrentStep] = useState<'welcome' | 'dosha' | 'astrology' | 'complete'>('welcome');
   const [doshaResults, setDoshaResults] = useState<{ dominant: DoshaType; secondary: DoshaType } | null>(null);
   const { profile } = useAuth();
 
   const handleDoshaComplete = (dominant: DoshaType, secondary: DoshaType) => {
     setDoshaResults({ dominant, secondary });
+    setCurrentStep('astrology');
+  };
+
+  const handleAstrologyComplete = () => {
     setCurrentStep('complete');
   };
 
@@ -110,6 +115,10 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
   if (currentStep === 'dosha') {
     return <DoshaAssessment onComplete={handleDoshaComplete} />;
+  }
+
+  if (currentStep === 'astrology') {
+    return <AstrologicalProfile onComplete={handleAstrologyComplete} />;
   }
 
   if (currentStep === 'complete' && doshaResults) {
