@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { YOGA_ASANAS, getRecommendedAsanas, YogaAsana } from '@/data/yogaAsanas';
 import { supabase } from '@/integrations/supabase/client';
+import { YogaQuestionnaire, YogaProfile } from './YogaQuestionnaire';
+import { PersonalizedYogaCourses } from './PersonalizedYogaCourses';
 import { 
   Play, 
   Pause, 
@@ -16,13 +18,18 @@ import {
   Trophy,
   Timer,
   Target,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  User
 } from 'lucide-react';
 import { PoseDetector } from './PoseDetector';
 
 type SessionGoal = 'energy' | 'calm' | 'strength' | 'flexibility';
+type YogaMode = 'welcome' | 'questionnaire' | 'courses' | 'practice';
 
 export const YogaStudio = () => {
+  const [mode, setMode] = useState<YogaMode>('welcome');
+  const [yogaProfile, setYogaProfile] = useState<YogaProfile | null>(null);
   const [selectedAsana, setSelectedAsana] = useState<YogaAsana | null>(null);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [sessionGoal, setSessionGoal] = useState<SessionGoal>('energy');
@@ -36,6 +43,23 @@ export const YogaStudio = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if user has completed yoga questionnaire
+  useEffect(() => {
+    if (profile?.yoga_profile) {
+      setYogaProfile(profile.yoga_profile);
+      setMode('courses');
+    }
+  }, [profile]);
+
+  const handleQuestionnaireComplete = (completedProfile: YogaProfile) => {
+    setYogaProfile(completedProfile);
+    setMode('courses');
+  };
+
+  const handleStartPractice = () => {
+    setMode('practice');
+  };
 
   const dominantDosha = profile?.dominant_dosha || 'vata';
   const recommendedAsanas = getRecommendedAsanas(dominantDosha, sessionGoal, difficulty);
@@ -151,7 +175,105 @@ export const YogaStudio = () => {
     advanced: 'bg-destructive/10 text-destructive'
   };
 
-  return (
+  // Welcome Screen
+  if (mode === 'welcome') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-healing-soft/20 flex items-center justify-center p-4">
+        <Card className="card-sacred max-w-2xl w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-6 p-6 rounded-full bg-gradient-to-r from-primary to-healing animate-sacred-glow">
+              <User className="w-12 h-12 text-white mx-auto" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-sacred mb-4">
+              Welcome to Your AI Yoga Studio
+            </CardTitle>
+            <p className="text-muted-foreground leading-relaxed">
+              Get personalized yoga courses tailored to your experience, goals, and physical needs. 
+              Our AI will create a custom practice just for you.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/20">
+                <Target className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-sacred">Personalized Assessment</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Answer questions about your experience, goals, and limitations
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/20">
+                <Trophy className="w-6 h-6 text-gold mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-sacred">Custom Courses</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Get courses designed specifically for your needs and schedule
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/20">
+                <Camera className="w-6 h-6 text-spiritual mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-sacred">AI Pose Detection</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Real-time feedback to perfect your alignment and form
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/20">
+                <CheckCircle2 className="w-6 h-6 text-healing mt-1 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-sacred">Progress Tracking</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Earn Sadhana Points and track your spiritual journey
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-center space-y-4">
+              <Button 
+                onClick={() => setMode('questionnaire')}
+                className="btn-hero text-lg px-8 py-6 w-full md:w-auto"
+              >
+                Start Your Assessment
+                <Sparkles className="ml-2 w-5 h-5" />
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Takes 3-5 minutes • Create your personalized yoga journey
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Questionnaire
+  if (mode === 'questionnaire') {
+    return <YogaQuestionnaire onComplete={handleQuestionnaireComplete} />;
+  }
+
+  // Personalized Courses
+  if (mode === 'courses' && yogaProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-healing-soft/20 p-4">
+        <div className="container mx-auto max-w-6xl">
+          <PersonalizedYogaCourses 
+            yogaProfile={yogaProfile} 
+            onStartPractice={handleStartPractice}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Practice Mode (existing yoga studio functionality)
+  if (mode === 'practice') {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-healing-soft/20 p-4">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
@@ -442,6 +564,21 @@ export const YogaStudio = () => {
           </div>
         )}
       </div>
+    </div>
+  }
+
+  // Default fallback
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-healing-soft/20 flex items-center justify-center p-4">
+      <Card className="card-sacred">
+        <CardContent className="p-8 text-center">
+          <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Loading Your Yoga Studio</h3>
+          <Button onClick={() => setMode('welcome')}>
+            Return to Welcome
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
