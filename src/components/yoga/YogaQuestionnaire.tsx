@@ -228,7 +228,7 @@ export const YogaQuestionnaire = ({ onComplete }: YogaQuestionnaireProps) => {
       // Save to database (you can create a yoga_profiles table)
       if (user) {
         await supabase.from('profiles').update({
-          yoga_profile: yogaProfile,
+          yoga_profile: yogaProfile as any,
           updated_at: new Date().toISOString()
         }).eq('user_id', user.id);
       }

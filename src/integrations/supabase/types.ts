@@ -88,6 +88,7 @@ export type Database = {
           updated_at: string
           user_id: string
           username: string | null
+          yoga_profile: Json | null
         }
         Insert: {
           birth_date?: string | null
@@ -106,6 +107,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           username?: string | null
+          yoga_profile?: Json | null
         }
         Update: {
           birth_date?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+          yoga_profile?: Json | null
         }
         Relationships: []
       }

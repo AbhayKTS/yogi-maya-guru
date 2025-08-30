@@ -46,8 +46,8 @@ export const YogaStudio = () => {
 
   // Check if user has completed yoga questionnaire
   useEffect(() => {
-    if (profile?.yoga_profile) {
-      setYogaProfile(profile.yoga_profile);
+    if (profile && (profile as any).yoga_profile) {
+      setYogaProfile((profile as any).yoga_profile);
       setMode('courses');
     }
   }, [profile]);
@@ -274,297 +274,299 @@ export const YogaStudio = () => {
 
   // Practice Mode (existing yoga studio functionality)
   if (mode === 'practice') {
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-healing-soft/20 p-4">
-      <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-sacred mb-2 font-devanagari">
-            योग स्टूडियो
-          </h1>
-          <h2 className="text-2xl font-semibold text-wisdom mb-4">
-            AI Yoga Studio
-          </h2>
-          <p className="text-muted-foreground">
-            Personalized yoga practice with real-time AI feedback
-          </p>
-        </div>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-healing-soft/20 p-4">
+        <div className="container mx-auto max-w-6xl">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-sacred mb-2 font-devanagari">
+              योग स्टूडियो
+            </h1>
+            <h2 className="text-2xl font-semibold text-wisdom mb-4">
+              AI Yoga Studio
+            </h2>
+            <p className="text-muted-foreground">
+              Personalized yoga practice with real-time AI feedback
+            </p>
+          </div>
 
-        {!selectedAsana ? (
-          <div className="space-y-8">
-            {/* Goal and Difficulty Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="card-sacred">
-                <CardHeader>
-                  <CardTitle className="text-lg">Choose Your Goal</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(['energy', 'calm', 'strength', 'flexibility'] as SessionGoal[]).map((goal) => (
-                      <Button
-                        key={goal}
-                        variant={sessionGoal === goal ? "default" : "outline"}
-                        onClick={() => setSessionGoal(goal)}
-                        className="flex items-center gap-2 h-auto p-3"
-                      >
-                        {goalIcons[goal]}
-                        <span className="capitalize">{goal}</span>
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card-sacred">
-                <CardHeader>
-                  <CardTitle className="text-lg">Difficulty Level</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
-                      <Button
-                        key={level}
-                        variant={difficulty === level ? "default" : "outline"}
-                        onClick={() => setDifficulty(level)}
-                        className="w-full justify-start"
-                      >
-                        <Badge 
-                          variant="outline" 
-                          className={`mr-2 ${difficultyColors[level]}`}
+          {!selectedAsana ? (
+            <div className="space-y-8">
+              {/* Goal and Difficulty Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="card-sacred">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Choose Your Goal</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['energy', 'calm', 'strength', 'flexibility'] as SessionGoal[]).map((goal) => (
+                        <Button
+                          key={goal}
+                          variant={sessionGoal === goal ? "default" : "outline"}
+                          onClick={() => setSessionGoal(goal)}
+                          className="flex items-center gap-2 h-auto p-3"
                         >
-                          {level}
-                        </Badge>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recommended Asanas */}
-            <div>
-              <h3 className="text-xl font-semibold text-sacred mb-4">
-                Recommended for Your {dominantDosha.charAt(0).toUpperCase() + dominantDosha.slice(1)} Constitution
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recommendedAsanas.map((asana) => (
-                  <Card key={asana.id} className="card-sacred hover:shadow-[var(--shadow-warm)] transition-[var(--transition-gentle)] cursor-pointer">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <Badge 
-                          variant="outline" 
-                          className={difficultyColors[asana.difficulty]}
-                        >
-                          {asana.difficulty}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {asana.duration_seconds}s
-                        </span>
-                      </div>
-                      <CardTitle className="text-lg">{asana.name}</CardTitle>
-                      <p className="text-sm text-transliteration">{asana.sanskrit_name}</p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap gap-1">
-                          {asana.benefits.slice(0, 3).map((benefit, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {benefit.replace('_', ' ')}
-                            </Badge>
-                          ))}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">
-                          <p>Instructions:</p>
-                          <ul className="mt-1 space-y-1">
-                            {asana.instructions.slice(0, 2).map((instruction, index) => (
-                              <li key={index} className="text-xs">• {instruction}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <Button 
-                          onClick={() => startSession(asana)}
-                          className="w-full btn-sacred"
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Start Practice
+                          {goalIcons[goal]}
+                          <span className="capitalize">{goal}</span>
                         </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="card-sacred">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Difficulty Level</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
+                        <Button
+                          key={level}
+                          variant={difficulty === level ? "default" : "outline"}
+                          onClick={() => setDifficulty(level)}
+                          className="w-full justify-start"
+                        >
+                          <Badge 
+                            variant="outline" 
+                            className={`mr-2 ${difficultyColors[level]}`}
+                          >
+                            {level}
+                          </Badge>
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recommended Asanas */}
+              <div>
+                <h3 className="text-xl font-semibold text-sacred mb-4">
+                  Recommended for Your {dominantDosha.charAt(0).toUpperCase() + dominantDosha.slice(1)} Constitution
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {recommendedAsanas.map((asana) => (
+                    <Card key={asana.id} className="card-sacred hover:shadow-[var(--shadow-warm)] transition-[var(--transition-gentle)] cursor-pointer">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <Badge 
+                            variant="outline" 
+                            className={difficultyColors[asana.difficulty]}
+                          >
+                            {asana.difficulty}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {asana.duration_seconds}s
+                          </span>
+                        </div>
+                        <CardTitle className="text-lg">{asana.name}</CardTitle>
+                        <p className="text-sm text-transliteration">{asana.sanskrit_name}</p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap gap-1">
+                            {asana.benefits.slice(0, 3).map((benefit, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {benefit.replace('_', ' ')}
+                              </Badge>
+                            ))}
+                          </div>
+                          
+                          <div className="text-sm text-muted-foreground">
+                            <p>Instructions:</p>
+                            <ul className="mt-1 space-y-1">
+                              {asana.instructions.slice(0, 2).map((instruction, index) => (
+                                <li key={index} className="text-xs">• {instruction}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <Button 
+                            onClick={() => startSession(asana)}
+                            className="w-full btn-sacred"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Start Practice
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          // Active Session View
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Camera/Pose Detection */}
-            <div className="lg:col-span-2">
-              <Card className="card-sacred">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      {showCamera ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
-                      {selectedAsana.name}
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowCamera(!showCamera)}
-                      >
-                        {showCamera ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={resetSession}
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {showCamera ? (
-                    <PoseDetector
-                      targetAsana={selectedAsana}
-                      onPoseDetected={handlePoseDetection}
-                      isActive={isSessionActive}
-                    />
-                  ) : (
-                    <div className="aspect-video bg-muted/20 rounded-lg flex items-center justify-center">
-                      <div className="text-center space-y-4">
-                        <CameraOff className="w-12 h-12 text-muted-foreground mx-auto" />
-                        <p className="text-muted-foreground">Camera disabled</p>
-                        <Button onClick={() => setShowCamera(true)}>
-                          Enable Camera for AI Feedback
+          ) : (
+            // Active Session View
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Camera/Pose Detection */}
+              <div className="lg:col-span-2">
+                <Card className="card-sacred">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        {showCamera ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+                        {selectedAsana.name}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCamera(!showCamera)}
+                        >
+                          {showCamera ? <CameraOff className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={resetSession}
+                        >
+                          <RotateCcw className="w-4 h-4" />
                         </Button>
                       </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {showCamera ? (
+                      <PoseDetector
+                        targetAsana={selectedAsana}
+                        onPoseDetected={handlePoseDetection}
+                        isActive={isSessionActive}
+                      />
+                    ) : (
+                      <div className="aspect-video bg-muted/20 rounded-lg flex items-center justify-center">
+                        <div className="text-center space-y-4">
+                          <CameraOff className="w-12 h-12 text-muted-foreground mx-auto" />
+                          <p className="text-muted-foreground">Camera disabled</p>
+                          <Button onClick={() => setShowCamera(true)}>
+                            Enable Camera for AI Feedback
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Session Info & Stats */}
+              <div className="space-y-6">
+                {/* Timer & Progress */}
+                <Card className="card-sacred">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Session Progress</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-primary">
+                        {Math.floor(sessionTimer / 60)}:{(sessionTimer % 60).toString().padStart(2, '0')}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAsana.duration_seconds - sessionTimer}s remaining
+                      </p>
+                    </div>
+                    
+                    <Progress 
+                      value={(sessionTimer / selectedAsana.duration_seconds) * 100} 
+                      className="h-2" 
+                    />
+                    
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div>
+                        <div className="text-lg font-semibold text-healing">
+                          {accuracyScore.toFixed(0)}%
+                        </div>
+                        <p className="text-xs text-muted-foreground">Accuracy</p>
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold text-gold">
+                          {Math.floor(sessionTimer / 60) * 10}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Points</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Real-time Feedback */}
+                <Card className="card-sacred">
+                  <CardHeader>
+                    <CardTitle className="text-lg">AI Feedback</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted/20 rounded-lg p-4 min-h-20">
+                      {feedback ? (
+                        <p className="text-sm leading-relaxed">{feedback}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">
+                          Enable camera to receive real-time pose feedback
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Instructions */}
+                <Card className="card-sacred">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Instructions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      {selectedAsana.instructions.map((instruction, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-primary font-medium">{index + 1}.</span>
+                          <span>{instruction}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {!isSessionActive && !isSessionComplete && (
+                    <Button 
+                      onClick={() => setIsSessionActive(true)}
+                      className="w-full btn-sacred"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Start Session
+                    </Button>
+                  )}
+                  
+                  {isSessionActive && (
+                    <Button 
+                      onClick={() => setIsSessionActive(false)}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Pause className="w-4 h-4 mr-2" />
+                      Pause Session
+                    </Button>
+                  )}
+                  
+                  {isSessionComplete && (
+                    <div className="text-center space-y-3">
+                      <div className="text-lg font-semibold text-sacred">
+                        Session Complete! 🎉
+                      </div>
+                      <Button 
+                        onClick={resetSession}
+                        className="w-full btn-hero"
+                      >
+                        Choose Another Pose
+                      </Button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Session Info & Stats */}
-            <div className="space-y-6">
-              {/* Timer & Progress */}
-              <Card className="card-sacred">
-                <CardHeader>
-                  <CardTitle className="text-lg">Session Progress</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {Math.floor(sessionTimer / 60)}:{(sessionTimer % 60).toString().padStart(2, '0')}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedAsana.duration_seconds - sessionTimer}s remaining
-                    </p>
-                  </div>
-                  
-                  <Progress 
-                    value={(sessionTimer / selectedAsana.duration_seconds) * 100} 
-                    className="h-2" 
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <div className="text-lg font-semibold text-healing">
-                        {accuracyScore.toFixed(0)}%
-                      </div>
-                      <p className="text-xs text-muted-foreground">Accuracy</p>
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold text-gold">
-                        {Math.floor(sessionTimer / 60) * 10}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Points</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Real-time Feedback */}
-              <Card className="card-sacred">
-                <CardHeader>
-                  <CardTitle className="text-lg">AI Feedback</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-muted/20 rounded-lg p-4 min-h-20">
-                    {feedback ? (
-                      <p className="text-sm leading-relaxed">{feedback}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">
-                        Enable camera to receive real-time pose feedback
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Instructions */}
-              <Card className="card-sacred">
-                <CardHeader>
-                  <CardTitle className="text-lg">Instructions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    {selectedAsana.instructions.map((instruction, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary font-medium">{index + 1}.</span>
-                        <span>{instruction}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                {!isSessionActive && !isSessionComplete && (
-                  <Button 
-                    onClick={() => setIsSessionActive(true)}
-                    className="w-full btn-sacred"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Session
-                  </Button>
-                )}
-                
-                {isSessionActive && (
-                  <Button 
-                    onClick={() => setIsSessionActive(false)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Pause className="w-4 h-4 mr-2" />
-                    Pause Session
-                  </Button>
-                )}
-                
-                {isSessionComplete && (
-                  <div className="text-center space-y-3">
-                    <div className="text-lg font-semibold text-sacred">
-                      Session Complete! 🎉
-                    </div>
-                    <Button 
-                      onClick={resetSession}
-                      className="w-full btn-hero"
-                    >
-                      Choose Another Pose
-                    </Button>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    );
   }
 
   // Default fallback

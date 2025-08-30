@@ -179,10 +179,12 @@ const generatePersonalizedCourses = (profile: YogaProfile): YogaCourse[] => {
     if (hasLimitations) score -= 40;
     
     // Intensity preference
-    const avgIntensity = course.sessions.reduce((acc, session) => {
+    const sessionIntensities = course.sessions.map(session => {
       const intensityScore = { gentle: 1, moderate: 2, vigorous: 3 }[session.intensity];
-      return acc + intensityScore;
-    }, 0) / course.sessions.length;
+      return intensityScore;
+    });
+    
+    const avgIntensity = sessionIntensities.reduce((acc, score) => acc + score, 0) / sessionIntensities.length;
     
     const preferredIntensityScore = { gentle: 1, moderate: 2, vigorous: 3 }[profile.preferred_intensity];
     if (Math.abs(avgIntensity - preferredIntensityScore) <= 0.5) score += 20;
