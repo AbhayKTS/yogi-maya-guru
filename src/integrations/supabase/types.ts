@@ -14,7 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dosha_assessment_responses: {
+        Row: {
+          answer_option: string
+          created_at: string
+          dosha_mapping: Database["public"]["Enums"]["dosha_type"]
+          id: string
+          question_id: number
+          user_id: string
+        }
+        Insert: {
+          answer_option: string
+          created_at?: string
+          dosha_mapping: Database["public"]["Enums"]["dosha_type"]
+          id?: string
+          question_id: number
+          user_id: string
+        }
+        Update: {
+          answer_option?: string
+          created_at?: string
+          dosha_mapping?: Database["public"]["Enums"]["dosha_type"]
+          id?: string
+          question_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorite_shloks: {
+        Row: {
+          created_at: string
+          id: string
+          shlok_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          shlok_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          shlok_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_shloks_shlok_id_fkey"
+            columns: ["shlok_id"]
+            isOneToOne: false
+            referencedRelation: "shloks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          birth_date: string | null
+          birth_place: string | null
+          birth_time: string | null
+          created_at: string
+          current_rank: Database["public"]["Enums"]["rank_type"]
+          dominant_dosha: Database["public"]["Enums"]["dosha_type"] | null
+          id: string
+          last_login_date: string | null
+          login_streak: number
+          sadhana_points: number
+          secondary_dosha: Database["public"]["Enums"]["dosha_type"] | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          birth_date?: string | null
+          birth_place?: string | null
+          birth_time?: string | null
+          created_at?: string
+          current_rank?: Database["public"]["Enums"]["rank_type"]
+          dominant_dosha?: Database["public"]["Enums"]["dosha_type"] | null
+          id?: string
+          last_login_date?: string | null
+          login_streak?: number
+          sadhana_points?: number
+          secondary_dosha?: Database["public"]["Enums"]["dosha_type"] | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          birth_date?: string | null
+          birth_place?: string | null
+          birth_time?: string | null
+          created_at?: string
+          current_rank?: Database["public"]["Enums"]["rank_type"]
+          dominant_dosha?: Database["public"]["Enums"]["dosha_type"] | null
+          id?: string
+          last_login_date?: string | null
+          login_streak?: number
+          sadhana_points?: number
+          secondary_dosha?: Database["public"]["Enums"]["dosha_type"] | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      shloks: {
+        Row: {
+          audio_url: string | null
+          chapter_context: string | null
+          created_at: string
+          id: string
+          sanskrit_text: string
+          source: string
+          translation: string
+          transliteration: string
+        }
+        Insert: {
+          audio_url?: string | null
+          chapter_context?: string | null
+          created_at?: string
+          id?: string
+          sanskrit_text: string
+          source: string
+          translation: string
+          transliteration: string
+        }
+        Update: {
+          audio_url?: string | null
+          chapter_context?: string | null
+          created_at?: string
+          id?: string
+          sanskrit_text?: string
+          source?: string
+          translation?: string
+          transliteration?: string
+        }
+        Relationships: []
+      }
+      yoga_sessions: {
+        Row: {
+          accuracy_score: number | null
+          completed_at: string
+          duration_minutes: number
+          id: string
+          sadhana_points_earned: number
+          session_type: string
+          user_id: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          completed_at?: string
+          duration_minutes: number
+          id?: string
+          sadhana_points_earned?: number
+          session_type: string
+          user_id: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          completed_at?: string
+          duration_minutes?: number
+          id?: string
+          sadhana_points_earned?: number
+          session_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +192,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      dosha_type: "vata" | "pitta" | "kapha"
+      rank_type:
+        | "padatik"
+        | "ashvarohi"
+        | "gaja"
+        | "ardharathi"
+        | "rathi"
+        | "ati_rathi"
+        | "maharathi"
+        | "maha_maharathi"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +328,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      dosha_type: ["vata", "pitta", "kapha"],
+      rank_type: [
+        "padatik",
+        "ashvarohi",
+        "gaja",
+        "ardharathi",
+        "rathi",
+        "ati_rathi",
+        "maharathi",
+        "maha_maharathi",
+      ],
+    },
   },
 } as const
