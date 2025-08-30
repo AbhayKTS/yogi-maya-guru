@@ -46,8 +46,8 @@ export const AstrologicalProfile = ({ onComplete }: AstrologicalProfileProps) =>
           birth_date: formData.birthDate,
           birth_time: formData.birthTime,
           birth_place: formData.birthPlace,
-          birth_latitude: formData.latitude || null,
-          birth_longitude: formData.longitude || null,
+          birth_latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          birth_longitude: formData.longitude ? parseFloat(formData.longitude) : null,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user?.id);
