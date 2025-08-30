@@ -386,7 +386,11 @@ export const Dashboard = () => {
                 <p className="text-sm text-white/90 mb-4">
                   Take 5 minutes to center yourself
                 </p>
-                <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white">
+                <Button 
+                  variant="outline" 
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+                  onClick={() => setCurrentView('pranayama')}
+                >
                   Start Now
                 </Button>
               </CardContent>
