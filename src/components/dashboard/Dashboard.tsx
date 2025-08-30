@@ -229,19 +229,22 @@ export const Dashboard = () => {
           className="card-spiritual cursor-pointer hover:shadow-lg transition-all"
           onClick={() => setCurrentView('insights')}
         >
-          <CardContent className="p-6 text-accent-foreground">
+          <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-full bg-white/20">
-                <Sparkles className="w-8 h-8" />
+                <Sparkles className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold mb-2">
+                <h3 className="text-xl font-bold mb-2 text-white">
                   Today's Sacred Insights
                 </h3>
-                <p className="opacity-90 mb-4">
-                  Personalized guidance based on your {dominantDosha} constitution and cosmic influences
+                <p className="text-white/90 mb-4">
+                  Personalized guidance based on your {dominantDosha || 'unique'} constitution and cosmic influences
                 </p>
-                <Button variant="outline" className="bg-white/10 border-white/20 text-accent-foreground hover:bg-white/20">
+                <Button 
+                  variant="outline" 
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
+                >
                   View All Insights →
                 </Button>
               </div>
