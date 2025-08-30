@@ -330,17 +330,17 @@ export const Dashboard = () => {
                   onClick={() => setCurrentView('wisdom')}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-white/20">
-                    <BookOpen className="w-8 h-8 text-secondary-foreground" />
+                  <div className="p-3 rounded-full bg-primary/20">
+                    <BookOpen className="w-8 h-8 text-foreground" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-secondary-foreground mb-2">
+                    <h3 className="text-xl font-bold text-foreground mb-2">
                       Today's Sacred Wisdom
                     </h3>
-                    <p className="text-secondary-foreground/80 mb-4">
+                    <p className="text-foreground/80 mb-4">
                       "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions..."
                     </p>
-                    <Button variant="outline" className="bg-white/10 border-white/20 text-secondary-foreground hover:bg-white/20">
+                    <Button variant="outline" className="bg-primary/10 border-primary/20 text-foreground hover:bg-primary/20">
                       Read Full Wisdom →
                     </Button>
                   </div>
@@ -380,13 +380,13 @@ export const Dashboard = () => {
 
             {/* Quick Meditation */}
             <Card className="card-spiritual">
-              <CardContent className="p-6 text-center text-accent-foreground">
-                <Moon className="w-12 h-12 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Quick Meditation</h3>
-                <p className="text-sm opacity-90 mb-4">
+              <CardContent className="p-6 text-center">
+                <Moon className="w-12 h-12 mx-auto mb-4 text-white" />
+                <h3 className="text-lg font-semibold mb-2 text-white">Quick Meditation</h3>
+                <p className="text-sm text-white/90 mb-4">
                   Take 5 minutes to center yourself
                 </p>
-                <Button variant="outline" className="bg-white/10 border-white/20 text-accent-foreground hover:bg-white/20">
+                <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white">
                   Start Now
                 </Button>
               </CardContent>

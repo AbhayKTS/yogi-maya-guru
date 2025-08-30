@@ -139,12 +139,27 @@ All colors MUST be HSL. Sacred geometry and spiritual aesthetics.
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-display: swap;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .font-devanagari {
-    font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+    font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+    font-display: swap;
+  }
+
+  /* Ensure all text is visible */
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    @apply text-foreground;
+  }
+
+  /* Fix button text visibility */
+  button {
+    @apply text-current;
   }
 }
 
@@ -178,7 +193,7 @@ All colors MUST be HSL. Sacred geometry and spiritual aesthetics.
   .card-sacred {
     @apply bg-card border border-border/50 rounded-2xl shadow-[var(--shadow-soft)]
            hover:shadow-[var(--shadow-warm)] transition-[var(--transition-gentle)]
-           backdrop-blur-sm;
+           backdrop-blur-sm text-card-foreground;
   }
 
   .card-golden {
@@ -187,8 +202,8 @@ All colors MUST be HSL. Sacred geometry and spiritual aesthetics.
   }
 
   .card-spiritual {
-    @apply bg-[var(--gradient-spiritual)] border border-spiritual/20 rounded-2xl
-           shadow-[var(--shadow-spiritual)] text-accent-foreground;
+    @apply bg-gradient-to-br from-spiritual to-wisdom border border-spiritual/20 rounded-2xl
+           shadow-[var(--shadow-spiritual)] text-white;
   }
 
   /* Sacred Text Styles */
