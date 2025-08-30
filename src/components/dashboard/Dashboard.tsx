@@ -119,7 +119,7 @@ export const Dashboard = () => {
                   {Object.entries(RANK_INFO).map(([key, rank]) => (
                     <Card 
                       key={key} 
-                      className={`card-sacred ${currentRank === key ? 'ring-2 ring-primary' : ''}`}
+                      className={`card-sacred ${profile?.current_rank === key ? 'ring-2 ring-primary' : ''}`}
                     >
                       <CardContent className="p-6 text-center space-y-4">
                         <div className="text-3xl font-devanagari text-primary">
@@ -135,7 +135,10 @@ export const Dashboard = () => {
                           <span className="font-semibold">Required: </span>
                           <span className="text-primary">{rank.pointsRequired} SP</span>
                         </div>
-                        {currentRank === key && (
+                        <p className="text-xs text-muted-foreground">
+                          {rank.unlocks}
+                        </p>
+                        {profile?.current_rank === key && (
                           <Badge className="bg-primary text-primary-foreground">
                             Current Rank
                           </Badge>
@@ -275,7 +278,7 @@ export const Dashboard = () => {
 
         {/* Today's Insights Preview */}
         <Card 
-          className="card-spiritual cursor-pointer hover:shadow-lg transition-all"
+          className="card-spiritual cursor-pointer hover:shadow-lg transition-all mb-8"
           onClick={() => setCurrentView('insights')}
         >
           <CardContent className="p-6">
