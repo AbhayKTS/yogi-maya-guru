@@ -13,6 +13,24 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { profile } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    // Show onboarding if user doesn't have dosha assessment completed
+    if (profile && !profile.dominant_dosha) {
+      setShowOnboarding(true);
+    }
+  }, [profile]);
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
+  }
+
+  return <Dashboard />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -36,23 +54,5 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
-const AppContent = () => {
-  const { profile } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    // Show onboarding if user doesn't have dosha assessment completed
-    if (profile && !profile.dominant_dosha) {
-      setShowOnboarding(true);
-    }
-  }, [profile]);
-
-  if (showOnboarding) {
-    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
-  }
-
-  return <Dashboard />;
-};
 
 export default App;
