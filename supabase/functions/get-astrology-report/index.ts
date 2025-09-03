@@ -24,6 +24,10 @@ interface ReportRequest {
 
 // Function to get OAuth2 access token
 async function getAccessToken(): Promise<string> {
+  console.log('Requesting OAuth2 token from Prokerala...');
+  console.log('CLIENT_ID available:', !!CLIENT_ID);
+  console.log('CLIENT_SECRET available:', !!CLIENT_SECRET);
+  
   const tokenResponse = await fetch('https://api.prokerala.com/token', {
     method: 'POST',
     headers: {
@@ -36,13 +40,28 @@ async function getAccessToken(): Promise<string> {
     }).toString()
   });
 
+  console.log('Token response status:', tokenResponse.status);
+  const responseText = await tokenResponse.text();
+  console.log('Token response body:', responseText);
+
   if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text();
-    console.error('Token request failed:', tokenResponse.status, errorText);
-    throw new Error(`Failed to get access token: ${tokenResponse.status} - ${errorText}`);
+    console.error('Token request failed:', tokenResponse.status, responseText);
+    throw new Error(`Failed to get access token: ${tokenResponse.status} - ${responseText}`);
   }
 
-  const tokenData = await tokenResponse.json();
+  let tokenData;
+  try {
+    tokenData = JSON.parse(responseText);
+  } catch (parseError) {
+    console.error('Failed to parse token response:', parseError);
+    throw new Error('Invalid token response format');
+  }
+
+  if (!tokenData.access_token) {
+    console.error('No access token in response:', tokenData);
+    throw new Error('No access token received from API');
+  }
+
   console.log('Token obtained successfully');
   return tokenData.access_token;
 }
@@ -79,7 +98,7 @@ serve(async (req) => {
     const params = new URLSearchParams({
       ayanamsa: '1', // Lahiri ayanamsa
       coordinates: birth_data.coordinates,
-      datetime: encodeURIComponent(birth_data.datetime)
+      datetime: birth_data.datetime  // Remove encodeURIComponent since URLSearchParams handles it
     });
 
     // Add location for panchang requests
