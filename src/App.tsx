@@ -13,6 +13,7 @@ import { NutritionGuide } from "./components/nutrition/NutritionGuide";
 import { PranayamaHub } from "./components/meditation/PranayamaHub";
 import { DailyWisdomPage } from "./components/wisdom/DailyWisdomPage";
 import { TodayInsights } from "./components/insights/TodayInsights";
+import { AstrologyHub } from "./components/astrology/AstrologyHub";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,11 @@ const App = () => (
           <Route path="/insights" element={
             <ProtectedRoute>
               <TodayInsights />
+            </ProtectedRoute>
+          } />
+          <Route path="/astrology" element={
+            <ProtectedRoute>
+              <AstrologyHub />
             </ProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />

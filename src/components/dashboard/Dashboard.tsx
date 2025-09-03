@@ -15,7 +15,8 @@ import {
   Heart,
   Sunrise,
   Moon,
-  TrendingUp
+  TrendingUp,
+  Stars
 } from 'lucide-react';
 import { DOSHA_INFO, RANK_INFO } from '@/types';
 import { DailyWisdomPage } from '@/components/wisdom/DailyWisdomPage';
@@ -23,9 +24,10 @@ import { NutritionGuide } from '@/components/nutrition/NutritionGuide';
 import { PranayamaHub } from '@/components/meditation/PranayamaHub';
 import { YogaStudio } from '@/components/yoga/YogaStudio';
 import { TodayInsights } from '@/components/insights/TodayInsights';
+import { AstrologyHub } from '@/components/astrology/AstrologyHub';
 import heroTemple from '@/assets/hero-temple.jpg';
 
-type DashboardView = 'home' | 'wisdom' | 'yoga' | 'nutrition' | 'pranayama' | 'insights' | 'ranks';
+type DashboardView = 'home' | 'wisdom' | 'yoga' | 'nutrition' | 'pranayama' | 'insights' | 'ranks' | 'astrology';
 
 export const Dashboard = () => {
   const { profile } = useAuth();
@@ -148,6 +150,16 @@ export const Dashboard = () => {
                   ))}
                 </div>
               </div>
+            </main>
+            {backButton}
+          </div>
+        );
+      case 'astrology':
+        return (
+          <div>
+            <DashboardHeader />
+            <main className="container mx-auto px-4 py-8">
+              <AstrologyHub />
             </main>
             {backButton}
           </div>
@@ -337,7 +349,7 @@ export const Dashboard = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Button
                     variant="outline"
                     className="h-auto p-4 flex flex-col items-start gap-2"
@@ -345,8 +357,8 @@ export const Dashboard = () => {
                   >
                     <Dumbbell className="w-5 h-5 text-primary" />
                     <div className="text-left">
-                      <div className="font-semibold">Morning Yoga</div>
-                      <div className="text-xs text-muted-foreground">20 min session</div>
+                      <div className="font-semibold">AI Yoga Studio</div>
+                      <div className="text-xs text-muted-foreground">Pose detection</div>
                     </div>
                   </Button>
 
@@ -371,6 +383,18 @@ export const Dashboard = () => {
                     <div className="text-left">
                       <div className="font-semibold">Nutrition</div>
                       <div className="text-xs text-muted-foreground">Dosha diet plan</div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-start gap-2"
+                    onClick={() => setCurrentView('astrology')}
+                  >
+                    <Stars className="w-5 h-5 text-wisdom" />
+                    <div className="text-left">
+                      <div className="font-semibold">Astrology</div>
+                      <div className="text-xs text-muted-foreground">Vedic insights</div>
                     </div>
                   </Button>
                 </div>

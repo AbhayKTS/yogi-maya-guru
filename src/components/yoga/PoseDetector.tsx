@@ -148,86 +148,229 @@ export const PoseDetector = ({ targetAsana, onPoseDetected, isActive }: PoseDete
     };
   }, []);
 
-  const analyzePose = (landmarks: any[], asana: YogaAsana) => {
-    // Simple pose analysis based on key landmarks
-    // This is a simplified version - in production you'd have more sophisticated analysis
+  const calculateAngle = (point1: any, point2: any, point3: any) => {
+    const radians = Math.atan2(point3.y - point2.y, point3.x - point2.x) - 
+                   Math.atan2(point1.y - point2.y, point1.x - point2.x);
+    let angle = Math.abs(radians * 180 / Math.PI);
+    if (angle > 180) angle = 360 - angle;
+    return angle;
+  };
 
+  const calculateDistance = (point1: any, point2: any) => {
+    return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+  };
+
+  const analyzePose = (landmarks: any[], asana: YogaAsana) => {
+    // Enhanced pose analysis with more sophisticated algorithms
     let accuracy = 75; // Base accuracy
     let feedback = 'Good posture! Keep it up.';
+    let specificFeedback: string[] = [];
 
     try {
-      // Example analysis for different poses
+      // Key landmark indices from MediaPipe Pose
+      const pose = {
+        leftShoulder: landmarks[11],
+        rightShoulder: landmarks[12],
+        leftElbow: landmarks[13],
+        rightElbow: landmarks[14],
+        leftWrist: landmarks[15],
+        rightWrist: landmarks[16],
+        leftHip: landmarks[23],
+        rightHip: landmarks[24],
+        leftKnee: landmarks[25],
+        rightKnee: landmarks[26],
+        leftAnkle: landmarks[27],
+        rightAnkle: landmarks[28],
+        nose: landmarks[0],
+        leftEye: landmarks[2],
+        rightEye: landmarks[5]
+      };
+
+      // Enhanced analysis for different poses
       if (asana.id === 'mountain_pose') {
-        // Check if spine is straight (shoulder to hip alignment)
-        const leftShoulder = landmarks[11];
-        const rightShoulder = landmarks[12];
-        const leftHip = landmarks[23];
-        const rightHip = landmarks[24];
-
-        if (leftShoulder && rightShoulder && leftHip && rightHip) {
-          const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y);
-          const hipLevel = Math.abs(leftHip.y - rightHip.y);
-
-          if (shoulderLevel < 0.05 && hipLevel < 0.05) {
-            accuracy = 90;
-            feedback = 'Excellent alignment! Your spine is perfectly straight.';
-          } else if (shoulderLevel > 0.1 || hipLevel > 0.1) {
-            accuracy = 60;
-            feedback = 'Try to level your shoulders and hips for better alignment.';
-          }
-        }
-      } else if (asana.id === 'warrior_ii') {
-        // Check front knee angle and arm position
-        const leftKnee = landmarks[25];
-        const rightKnee = landmarks[26];
-        const leftWrist = landmarks[15];
-        const rightWrist = landmarks[16];
-        const leftShoulder = landmarks[11];
-        const rightShoulder = landmarks[12];
-
-        if (leftWrist && rightWrist && leftShoulder && rightShoulder) {
-          // Check if arms are extended horizontally
-          const armLevel = Math.abs(leftWrist.y - rightWrist.y);
-          const shoulderArmLevel = Math.abs((leftShoulder.y + rightShoulder.y) / 2 - (leftWrist.y + rightWrist.y) / 2);
-
-          if (armLevel < 0.1 && shoulderArmLevel < 0.1) {
-            accuracy = 85;
-            feedback = 'Great arm extension! Keep your arms parallel to the floor.';
-          } else {
-            accuracy = 65;
-            feedback = 'Extend your arms parallel to the floor and keep them level.';
-          }
-        }
-      } else if (asana.id === 'tree_pose') {
-        // Check balance and standing leg
-        const leftAnkle = landmarks[27];
-        const rightAnkle = landmarks[28];
-        const leftKnee = landmarks[25];
-        const rightKnee = landmarks[26];
-
-        if (leftAnkle && rightAnkle) {
-          const ankleDistance = Math.abs(leftAnkle.x - rightAnkle.x);
+        let poseScore = 0;
+        
+        // Check spine alignment (head to hips)
+        if (pose.nose && pose.leftHip && pose.rightHip) {
+          const centerHip = { x: (pose.leftHip.x + pose.rightHip.x) / 2, y: (pose.leftHip.y + pose.rightHip.y) / 2 };
+          const spineAlignment = Math.abs(pose.nose.x - centerHip.x);
           
-          if (ankleDistance > 0.2) {
-            accuracy = 80;
-            feedback = 'Good balance! Keep your standing leg strong and steady.';
+          if (spineAlignment < 0.03) {
+            poseScore += 30;
+            specificFeedback.push('Perfect spinal alignment');
+          } else if (spineAlignment < 0.06) {
+            poseScore += 20;
+            specificFeedback.push('Good spinal alignment');
           } else {
-            accuracy = 65;
-            feedback = 'Lift your foot higher and press it into your standing leg.';
+            specificFeedback.push('Align your head over your hips');
           }
         }
+
+        // Check shoulder level
+        if (pose.leftShoulder && pose.rightShoulder) {
+          const shoulderLevel = Math.abs(pose.leftShoulder.y - pose.rightShoulder.y);
+          if (shoulderLevel < 0.02) {
+            poseScore += 25;
+            specificFeedback.push('Shoulders perfectly level');
+          } else if (shoulderLevel < 0.04) {
+            poseScore += 15;
+          } else {
+            specificFeedback.push('Level your shoulders');
+          }
+        }
+
+        // Check hip level
+        if (pose.leftHip && pose.rightHip) {
+          const hipLevel = Math.abs(pose.leftHip.y - pose.rightHip.y);
+          if (hipLevel < 0.02) {
+            poseScore += 25;
+          } else {
+            specificFeedback.push('Level your hips');
+          }
+        }
+
+        // Check feet positioning
+        if (pose.leftAnkle && pose.rightAnkle) {
+          const feetDistance = Math.abs(pose.leftAnkle.x - pose.rightAnkle.x);
+          if (feetDistance < 0.15 && feetDistance > 0.05) {
+            poseScore += 20;
+            specificFeedback.push('Perfect feet positioning');
+          } else {
+            specificFeedback.push('Keep feet hip-width apart');
+          }
+        }
+
+        accuracy = Math.max(60, 75 + poseScore);
+        
+      } else if (asana.id === 'warrior_ii') {
+        let poseScore = 0;
+
+        // Check arm alignment (should be parallel to floor)
+        if (pose.leftWrist && pose.rightWrist && pose.leftShoulder && pose.rightShoulder) {
+          const leftArmAngle = Math.abs(calculateAngle(pose.leftShoulder, pose.leftElbow, pose.leftWrist) - 180);
+          const rightArmAngle = Math.abs(calculateAngle(pose.rightShoulder, pose.rightElbow, pose.rightWrist) - 180);
+          
+          if (leftArmAngle < 10 && rightArmAngle < 10) {
+            poseScore += 30;
+            specificFeedback.push('Arms perfectly extended');
+          } else if (leftArmAngle < 20 && rightArmAngle < 20) {
+            poseScore += 20;
+            specificFeedback.push('Good arm extension');
+          } else {
+            specificFeedback.push('Straighten your arms parallel to floor');
+          }
+        }
+
+        // Check front leg bend (should be around 90 degrees)
+        if (pose.leftHip && pose.leftKnee && pose.leftAnkle) {
+          const frontLegAngle = calculateAngle(pose.leftHip, pose.leftKnee, pose.leftAnkle);
+          if (Math.abs(frontLegAngle - 90) < 10) {
+            poseScore += 25;
+            specificFeedback.push('Perfect front leg bend');
+          } else if (Math.abs(frontLegAngle - 90) < 20) {
+            poseScore += 15;
+          } else {
+            specificFeedback.push('Bend front knee to 90 degrees');
+          }
+        }
+
+        // Check back leg (should be straight)
+        if (pose.rightHip && pose.rightKnee && pose.rightAnkle) {
+          const backLegAngle = calculateAngle(pose.rightHip, pose.rightKnee, pose.rightAnkle);
+          if (backLegAngle > 160) {
+            poseScore += 25;
+            specificFeedback.push('Back leg perfectly straight');
+          } else {
+            specificFeedback.push('Straighten your back leg');
+          }
+        }
+
+        accuracy = Math.max(65, 70 + poseScore);
+
+      } else if (asana.id === 'tree_pose') {
+        let poseScore = 0;
+
+        // Check standing leg stability
+        if (pose.leftAnkle && pose.rightAnkle) {
+          const ankleDistance = calculateDistance(pose.leftAnkle, pose.rightAnkle);
+          if (ankleDistance > 0.3) {
+            poseScore += 30;
+            specificFeedback.push('Excellent balance');
+          } else if (ankleDistance > 0.2) {
+            poseScore += 20;
+            specificFeedback.push('Good balance');
+          } else {
+            specificFeedback.push('Lift your foot higher on standing leg');
+          }
+        }
+
+        // Check torso alignment
+        if (pose.nose && pose.leftHip && pose.rightHip) {
+          const centerHip = { x: (pose.leftHip.x + pose.rightHip.x) / 2, y: (pose.leftHip.y + pose.rightHip.y) / 2 };
+          const torsoAlignment = Math.abs(pose.nose.x - centerHip.x);
+          
+          if (torsoAlignment < 0.04) {
+            poseScore += 25;
+            specificFeedback.push('Perfect torso alignment');
+          } else {
+            specificFeedback.push('Keep torso centered over standing leg');
+          }
+        }
+
+        // Check arms (prayer position or overhead)
+        if (pose.leftWrist && pose.rightWrist) {
+          const handsDistance = calculateDistance(pose.leftWrist, pose.rightWrist);
+          if (handsDistance < 0.1) {
+            poseScore += 25;
+            specificFeedback.push('Beautiful hand position');
+          }
+        }
+
+        accuracy = Math.max(65, 70 + poseScore);
+
+      } else if (asana.id === 'downward_dog') {
+        let poseScore = 0;
+
+        // Check arm-torso angle (should be straight line)
+        if (pose.leftWrist && pose.leftShoulder && pose.leftHip) {
+          const leftSideAngle = calculateAngle(pose.leftWrist, pose.leftShoulder, pose.leftHip);
+          if (Math.abs(leftSideAngle - 180) < 15) {
+            poseScore += 30;
+            specificFeedback.push('Perfect arm-torso alignment');
+          } else {
+            specificFeedback.push('Create straight line from hands to hips');
+          }
+        }
+
+        // Check leg positioning
+        if (pose.leftHip && pose.leftKnee && pose.leftAnkle) {
+          const legAngle = calculateAngle(pose.leftHip, pose.leftKnee, pose.leftAnkle);
+          if (legAngle > 160) {
+            poseScore += 25;
+            specificFeedback.push('Legs perfectly straight');
+          } else {
+            specificFeedback.push('Straighten your legs');
+          }
+        }
+
+        accuracy = Math.max(65, 70 + poseScore);
       }
 
-      // Add some randomness to simulate real analysis
-      accuracy += Math.random() * 10 - 5; // ±5 points variation
-      accuracy = Math.max(50, Math.min(95, accuracy)); // Clamp between 50-95
+      // Compile feedback
+      if (specificFeedback.length > 0) {
+        feedback = specificFeedback.join('. ') + '.';
+      }
+
+      // Add slight randomness for natural feel
+      accuracy += Math.random() * 6 - 3; // ±3 points variation
+      accuracy = Math.max(50, Math.min(95, Math.round(accuracy)));
 
     } catch (error) {
       console.error('Error analyzing pose:', error);
-      feedback = 'Continue holding the pose. Focus on your breath.';
+      feedback = 'Continue holding the pose. Focus on your breath and alignment.';
     }
 
-    return { accuracy: Math.round(accuracy), feedback };
+    return { accuracy, feedback };
   };
 
   if (error) {
