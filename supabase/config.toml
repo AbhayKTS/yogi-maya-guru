@@ -1,1 +1,4 @@
 project_id = "fqstbeaarygxbrlpfuck"
+
+[functions.get-astrology-report]
+verify_jwt = false

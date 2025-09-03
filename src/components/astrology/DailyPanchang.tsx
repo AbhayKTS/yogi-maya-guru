@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Sun, Moon, Star, Clock } from 'lucide-react';
+import { Calendar, Sun, Moon, Star, Clock, RefreshCw } from 'lucide-react';
+import { AstrologyAPI } from '@/utils/astrologyApi';
+import { useToast } from '@/hooks/use-toast';
 
 interface PanchangData {
   date: string;
@@ -42,44 +44,28 @@ interface PanchangData {
 export const DailyPanchang = () => {
   const [panchangData, setPanchangData] = useState<PanchangData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  const { toast } = useToast();
 
-  useEffect(() => {
-    // Generate mock panchang data for today
-    // In production, this would fetch from a real Panchang API
-    const generateTodaysPanchang = (): PanchangData => {
-      const today = new Date();
-      const nakshatras = [
-        'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira',
-        'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha',
-        'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra',
-        'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula',
-        'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta',
-        'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada',
-        'Revati'
-      ];
+  const fetchPanchangData = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await AstrologyAPI.getPanchang();
       
-      const tithis = [
-        'Pratipada', 'Dwitiya', 'Tritiya', 'Chaturthi', 'Panchami',
-        'Shashthi', 'Saptami', 'Ashtami', 'Navami', 'Dashami',
-        'Ekadashi', 'Dwadashi', 'Trayodashi', 'Chaturdashi', 'Purnima/Amavasya'
-      ];
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch panchang data');
+      }
 
-      const yogas = [
-        'Vishkumbha', 'Preeti', 'Ayushman', 'Saubhagya', 'Shobhana',
-        'Atiganda', 'Sukarma', 'Dhriti', 'Shula', 'Ganda',
-        'Vriddhi', 'Dhruva', 'Vyaghata', 'Harshana', 'Vajra',
-        'Siddhi', 'Vyatipata', 'Variyana', 'Parigha', 'Shiva',
-        'Siddha', 'Sadhya', 'Shubha', 'Shukla', 'Brahma',
-        'Indra', 'Vaidhriti'
-      ];
-
-      const karanas = [
-        'Bava', 'Balava', 'Kaulava', 'Taitila', 'Gara',
-        'Vanija', 'Vishti', 'Shakuni', 'Chatushpada',
-        'Naga', 'Kimstughna'
-      ];
-
-      return {
+      setPanchangData(result.data);
+    } catch (error: any) {
+      console.error('Error fetching panchang:', error);
+      setError('Failed to load today\'s panchang. Please try again.');
+      
+      // Fallback to basic panchang data
+      const today = new Date();
+      const fallbackData: PanchangData = {
         date: today.toLocaleDateString('en-US', { 
           weekday: 'long', 
           year: 'numeric', 
@@ -91,21 +77,21 @@ export const DailyPanchang = () => {
         moonrise: '08:45 PM',
         moonset: '07:20 AM',
         tithi: {
-          name: tithis[Math.floor(Math.random() * tithis.length)],
-          endTime: '11:30 AM'
+          name: 'Loading...',
+          endTime: 'Loading...'
         },
         nakshatra: {
-          name: nakshatras[Math.floor(Math.random() * nakshatras.length)],
-          lord: 'Mars',
-          endTime: '02:15 PM'
+          name: 'Loading...',
+          lord: 'Loading...',
+          endTime: 'Loading...'
         },
         yoga: {
-          name: yogas[Math.floor(Math.random() * yogas.length)],
-          endTime: '09:45 AM'
+          name: 'Loading...',
+          endTime: 'Loading...'
         },
         karana: {
-          name: karanas[Math.floor(Math.random() * karanas.length)],
-          endTime: '05:30 PM'
+          name: 'Loading...',
+          endTime: 'Loading...'
         },
         auspiciousTimes: {
           abhijitMuhurta: '11:48 AM - 12:36 PM',
@@ -118,23 +104,41 @@ export const DailyPanchang = () => {
           gulikai: '10:30 AM - 12:00 PM'
         },
         recommendations: [
-          'Favorable for spiritual practices and meditation',
-          'Good time for starting new ventures',
-          'Avoid important decisions during Rahu Kaal',
-          'Chant mantras during Brahma Muhurta for maximum benefit'
+          'Panchang data will be updated shortly',
+          'Please check your internet connection',
+          'Try refreshing the page'
         ]
       };
-    };
-
-    setTimeout(() => {
-      setPanchangData(generateTodaysPanchang());
+      
+      setPanchangData(fallbackData);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchPanchangData();
   }, []);
+
+  const refreshPanchang = () => {
+    toast({
+      title: "Refreshing Panchang",
+      description: "Fetching latest cosmic data...",
+    });
+    fetchPanchangData();
+  };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
+        <Card className="card-golden">
+          <CardContent className="p-8 text-center">
+            <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
+            <h3 className="text-lg font-semibold mb-2">Loading Today's Panchang</h3>
+            <p className="text-muted-foreground">Fetching cosmic data from the universe...</p>
+          </CardContent>
+        </Card>
+        
         {[1, 2, 3].map((i) => (
           <Card key={i} className="card-sacred">
             <CardContent className="p-6">
@@ -163,11 +167,30 @@ export const DailyPanchang = () => {
           <CardTitle className="text-2xl text-foreground">
             Today's Panchang
           </CardTitle>
-          <p className="text-foreground/80">
+          <p className="text-foreground/80 mb-2">
             {panchangData.date}
           </p>
+          <button 
+            onClick={refreshPanchang}
+            className="text-sm text-primary hover:text-primary/80 flex items-center gap-1 mx-auto"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Refresh
+          </button>
         </CardHeader>
       </Card>
+
+      {error && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-center text-amber-800">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Clock className="w-4 h-4" />
+              <span className="font-medium">Limited Data Available</span>
+            </div>
+            <p className="text-sm">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sun & Moon Timings */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

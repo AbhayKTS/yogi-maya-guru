@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Star, Moon, Sun, RefreshCw } from 'lucide-react';
+import { AstrologyAPI } from '@/utils/astrologyApi';
 
 interface KundaliData {
   planets: Array<{
@@ -53,55 +54,19 @@ export const KundaliChart = () => {
     setError('');
 
     try {
-      // For demo purposes, we'll generate mock data
-      // In production, you would integrate with a real Vedic astrology API
-      const mockKundaliData: KundaliData = {
-        planets: [
-          { name: 'Sun', sign: 'Leo', house: 1, degree: 15.5, retrograde: false },
-          { name: 'Moon', sign: 'Cancer', house: 12, degree: 8.2, retrograde: false },
-          { name: 'Mars', sign: 'Aries', house: 9, degree: 22.1, retrograde: false },
-          { name: 'Mercury', sign: 'Virgo', house: 2, degree: 12.8, retrograde: true },
-          { name: 'Jupiter', sign: 'Sagittarius', house: 5, degree: 18.3, retrograde: false },
-          { name: 'Venus', sign: 'Libra', house: 3, degree: 25.7, retrograde: false },
-          { name: 'Saturn', sign: 'Capricorn', house: 6, degree: 5.4, retrograde: true },
-          { name: 'Rahu', sign: 'Gemini', house: 11, degree: 14.9, retrograde: true },
-          { name: 'Ketu', sign: 'Sagittarius', house: 5, degree: 14.9, retrograde: true }
-        ],
-        houses: [
-          { number: 1, sign: 'Leo', lord: 'Sun' },
-          { number: 2, sign: 'Virgo', lord: 'Mercury' },
-          { number: 3, sign: 'Libra', lord: 'Venus' },
-          { number: 4, sign: 'Scorpio', lord: 'Mars' },
-          { number: 5, sign: 'Sagittarius', lord: 'Jupiter' },
-          { number: 6, sign: 'Capricorn', lord: 'Saturn' },
-          { number: 7, sign: 'Aquarius', lord: 'Saturn' },
-          { number: 8, sign: 'Pisces', lord: 'Jupiter' },
-          { number: 9, sign: 'Aries', lord: 'Mars' },
-          { number: 10, sign: 'Taurus', lord: 'Venus' },
-          { number: 11, sign: 'Gemini', lord: 'Mercury' },
-          { number: 12, sign: 'Cancer', lord: 'Moon' }
-        ],
-        dasha: {
-          current: 'Jupiter Mahadasha',
-          remaining: '3 years 2 months'
-        },
-        yogas: [
-          'Gaja Kesari Yoga',
-          'Raj Yoga',
-          'Dhana Yoga'
-        ],
-        predictions: {
-          general: 'This is a favorable period for spiritual growth and learning. Your Jupiter placement brings wisdom and good fortune.',
-          career: 'Strong potential for leadership roles. Mars in 9th house indicates success in fields related to education or philosophy.',
-          health: 'Generally good health, but pay attention to digestive system due to Mercury retrograde in 2nd house.',
-          relationships: 'Venus in Libra brings harmony in relationships. Good time for partnerships and collaborations.'
-        }
-      };
+      // Use real Prokerala API for kundali generation
+      const result = await AstrologyAPI.getKundali(
+        profile.birth_date,
+        profile.birth_time,
+        profile.birth_place
+      );
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setKundaliData(mockKundaliData);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to generate kundali');
+      }
+
+      // Use the transformed data from the API
+      setKundaliData(result.data);
       
       toast({
         title: "Kundali Generated",
@@ -113,7 +78,7 @@ export const KundaliChart = () => {
       setError('Failed to generate kundali. Please try again.');
       toast({
         title: "Error",
-        description: "Failed to generate your kundali. Please try again.",
+        description: error.message || "Failed to generate your kundali. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -190,7 +155,7 @@ export const KundaliChart = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {kundaliData.planets.map((planet, index) => (
+                {kundaliData.planets && kundaliData.planets.map((planet, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
@@ -205,7 +170,7 @@ export const KundaliChart = () => {
                     <div className="text-right text-sm">
                       <div className="font-medium text-primary">{planet.sign}</div>
                       <div className="text-muted-foreground">
-                        House {planet.house} • {planet.degree.toFixed(1)}°
+                        House {planet.house} • {typeof planet.degree === 'number' ? planet.degree.toFixed(1) : planet.degree}°
                       </div>
                     </div>
                   </div>
@@ -222,10 +187,10 @@ export const KundaliChart = () => {
             <CardContent>
               <div className="text-center space-y-2">
                 <div className="text-2xl font-bold text-primary">
-                  {kundaliData.dasha.current}
+                  {kundaliData.dasha?.current || 'Unknown Dasha'}
                 </div>
                 <div className="text-muted-foreground">
-                  Remaining: {kundaliData.dasha.remaining}
+                  Remaining: {kundaliData.dasha?.remaining || 'Unknown'}
                 </div>
               </div>
             </CardContent>
@@ -238,7 +203,7 @@ export const KundaliChart = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {kundaliData.yogas.map((yoga, index) => (
+                {kundaliData.yogas && kundaliData.yogas.map((yoga, index) => (
                   <Badge key={index} className="bg-spiritual text-white">
                     {yoga}
                   </Badge>
@@ -249,7 +214,7 @@ export const KundaliChart = () => {
 
           {/* Predictions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(kundaliData.predictions).map(([category, prediction]) => (
+            {kundaliData.predictions && Object.entries(kundaliData.predictions).map(([category, prediction]) => (
               <Card key={category} className="card-sacred">
                 <CardHeader>
                   <CardTitle className="capitalize text-wisdom">
