@@ -22,6 +22,31 @@ interface ReportRequest {
   location?: string;
 }
 
+// Function to get OAuth2 access token
+async function getAccessToken(): Promise<string> {
+  const tokenResponse = await fetch('https://api.prokerala.com/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: CLIENT_ID!,
+      client_secret: CLIENT_SECRET!,
+    }).toString()
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text();
+    console.error('Token request failed:', tokenResponse.status, errorText);
+    throw new Error(`Failed to get access token: ${tokenResponse.status} - ${errorText}`);
+  }
+
+  const tokenData = await tokenResponse.json();
+  console.log('Token obtained successfully');
+  return tokenData.access_token;
+}
+
 serve(async (req) => {
   // Handle preflight CORS request
   if (req.method === 'OPTIONS') {
@@ -38,6 +63,9 @@ serve(async (req) => {
 
     console.log(`Processing astrology request: ${report_type}`);
     console.log('Birth data:', birth_data);
+
+    // Get OAuth2 access token
+    const accessToken = await getAccessToken();
 
     // Prepare the request to the Prokerala API
     let apiEndpoint = `${API_BASE_URL}/v2/astrology/${report_type}`;
@@ -68,7 +96,7 @@ serve(async (req) => {
     const response = await fetch(apiEndpoint, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${CLIENT_ID}:${CLIENT_SECRET}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/json'
       }
     });
