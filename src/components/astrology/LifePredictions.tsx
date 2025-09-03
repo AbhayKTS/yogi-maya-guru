@@ -131,7 +131,7 @@ export const LifePredictions = () => {
   };
 
   const getAllPredictions = async () => {
-    const types: PredictionType[] = ['career', 'love', 'finance', 'health', 'education'];
+    const types: PredictionType[] = ['career', 'love', 'finance', 'health', 'marriage'];
     
     toast({
       title: "Generating All Predictions",
