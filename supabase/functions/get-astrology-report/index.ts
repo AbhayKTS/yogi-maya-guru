@@ -86,20 +86,77 @@ serve(async (req) => {
     // Get OAuth2 access token
     const accessToken = await getAccessToken();
 
-    // Prepare the request to the Prokerala API
-    let apiEndpoint = `${API_BASE_URL}/v2/astrology/${report_type}`;
-    
-    // Convert report_type to correct endpoint names
-    if (report_type === 'kundali') {
-      apiEndpoint = `${API_BASE_URL}/v2/astrology/kundli`;
-    }
-
     // Build query parameters
     const params = new URLSearchParams({
       ayanamsa: '1', // Lahiri ayanamsa
       coordinates: birth_data.coordinates,
-      datetime: birth_data.datetime  // Remove encodeURIComponent since URLSearchParams handles it
+      datetime: birth_data.datetime
     });
+
+    // Special handling for comprehensive kundali reports
+    if (report_type === 'kundali') {
+      console.log('Fetching comprehensive kundali data from multiple endpoints...');
+      
+      // Call multiple endpoints for complete birth chart data
+      const endpoints = [
+        { type: 'detailed-kundli', url: 'https://api.prokerala.com/v2/astrology/detailed-kundli' },
+        { type: 'planet-position', url: 'https://api.prokerala.com/v2/astrology/planet-position' },
+        { type: 'dasha-periods', url: 'https://api.prokerala.com/v2/astrology/dasha-periods' }
+      ];
+
+      const combinedData: any = {
+        detailed_kundli: null,
+        planet_position: null,
+        dasha_periods: null
+      };
+
+      // Fetch data from all endpoints
+      for (const endpoint of endpoints) {
+        try {
+          const url = `${endpoint.url}?${params.toString()}`;
+          console.log(`Making request to ${endpoint.type}:`, url);
+          
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          console.log(`${endpoint.type} response status:`, response.status);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`${endpoint.type} response:`, JSON.stringify(data, null, 2));
+            combinedData[endpoint.type.replace('-', '_')] = data;
+          } else {
+            const errorText = await response.text();
+            console.warn(`${endpoint.type} request failed:`, response.status, errorText);
+          }
+        } catch (error) {
+          console.warn(`Error fetching ${endpoint.type}:`, error);
+        }
+      }
+
+      // Transform the combined data
+      const transformedData = transformComprehensiveKundaliData(combinedData);
+      
+      return new Response(JSON.stringify({
+        success: true,
+        data: transformedData
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle other report types with single endpoint calls
+    let apiEndpoint = `${API_BASE_URL}/v2/astrology/${report_type}`;
+    
+    // Convert report_type to correct endpoint names
+    if (report_type === 'panchang') {
+      apiEndpoint = `${API_BASE_URL}/v2/astrology/panchang`;
+    }
 
     // Add location for panchang requests
     if (report_type === 'panchang' && location) {
@@ -139,10 +196,7 @@ serve(async (req) => {
     // Transform the data based on report type for consistent frontend usage
     let transformedData = data;
 
-    if (report_type === 'kundali') {
-      // Transform kundali data to match our frontend interface
-      transformedData = transformKundaliData(data);
-    } else if (report_type === 'panchang') {
+    if (report_type === 'panchang') {
       // Transform panchang data
       transformedData = transformPanchangData(data);
     } else if (report_type.includes('prediction/')) {
@@ -150,7 +204,10 @@ serve(async (req) => {
       transformedData = transformPredictionData(data, report_type);
     }
 
-    return new Response(JSON.stringify(transformedData), {
+    return new Response(JSON.stringify({
+      success: true,
+      data: transformedData
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
@@ -168,79 +225,151 @@ serve(async (req) => {
   }
 });
 
-function transformKundaliData(data: any) {
+// Transform comprehensive Kundali data from multiple endpoints
+function transformComprehensiveKundaliData(combinedData: any) {
+  console.log('Combined API data:', JSON.stringify(combinedData, null, 2));
+  
   try {
-    // The Prokerala API returns data in { status: "ok", data: {...} } format
-    const responseData = data.data || data;
-    
-    // Extract planets from the API response
-    const planets = responseData.planets?.map((planet: any) => ({
-      name: planet.name || planet.planet_name,
-      sign: planet.sign?.name || planet.rasi?.name || 'Unknown',
-      house: planet.house || 1,
-      degree: planet.degrees || planet.degree || '0°00\'',
-      retrograde: planet.is_retrograde || false
-    })) || [];
-
-    // Extract houses from the API response  
-    const houses = Array.from({ length: 12 }, (_, i) => ({
-      number: i + 1,
-      sign: responseData.houses?.[i]?.sign?.name || 'Unknown',
-      lord: responseData.houses?.[i]?.lord?.name || 'Unknown'
-    }));
-
-    // Extract dasha information
-    const dasha = {
-      current: responseData.current_dasha?.dasha?.name || responseData.dasha_periods?.[0]?.dasha?.name || 'Unknown Dasha',
-      remaining: responseData.current_dasha?.remaining || responseData.dasha_periods?.[0]?.remaining || 'Unknown'
+    const result = {
+      planets: {},
+      houses: {},
+      dasha: {},
+      yogas: [],
+      predictions: {},
+      chart: null
     };
 
-    // Extract yogas from the response
-    const yogas = [];
-    if (responseData.yogas) {
-      responseData.yogas.forEach((yogaGroup: any) => {
-        if (yogaGroup.yoga_list) {
-          yogaGroup.yoga_list.forEach((yoga: any) => {
-            if (yoga.has_yoga) {
-              yogas.push(yoga.name);
-            }
-          });
-        }
-      });
+    // Process detailed kundli data
+    if (combinedData.detailed_kundli?.data) {
+      const detailedData = combinedData.detailed_kundli.data;
+      
+      if (detailedData.nakshatra_details) {
+        result.predictions.nakshatra = {
+          name: detailedData.nakshatra_details.nakshatra?.name || 'Unknown',
+          lord: detailedData.nakshatra_details.nakshatra?.lord?.name || 'Unknown',
+          pada: detailedData.nakshatra_details.nakshatra?.pada || 0,
+          deity: detailedData.nakshatra_details.additional_info?.deity || 'Unknown',
+          symbol: detailedData.nakshatra_details.additional_info?.symbol || 'Unknown',
+          animal_sign: detailedData.nakshatra_details.additional_info?.animal_sign || 'Unknown'
+        };
+        
+        result.predictions.rasi = {
+          chandra: detailedData.nakshatra_details.chandra_rasi?.name || 'Unknown',
+          soorya: detailedData.nakshatra_details.soorya_rasi?.name || 'Unknown',
+          zodiac: detailedData.nakshatra_details.zodiac?.name || 'Unknown'
+        };
+      }
+
+      if (detailedData.mangal_dosha) {
+        result.predictions.mangal_dosha = {
+          has_dosha: detailedData.mangal_dosha.has_dosha || false,
+          description: detailedData.mangal_dosha.description || 'No information available'
+        };
+      }
+
+      if (detailedData.yoga_details && Array.isArray(detailedData.yoga_details)) {
+        result.yogas = detailedData.yoga_details.map((yoga: any) => ({
+          name: yoga.name || 'Unknown Yoga',
+          description: yoga.description || 'No description available'
+        }));
+      }
     }
 
-    // Create predictions based on available data
-    const predictions = {
-      general: responseData.predictions?.general || 'Detailed analysis based on your birth chart showing planetary positions and their effects.',
-      career: responseData.predictions?.career || 'Career insights based on planetary positions in your birth chart.',
-      health: responseData.predictions?.health || 'Health guidance derived from planetary influences in your horoscope.',
-      relationships: responseData.predictions?.relationships || 'Relationship compatibility and timing insights from your birth chart.'
-    };
+    // Process planet position data
+    if (combinedData.planet_position?.data) {
+      const planetData = combinedData.planet_position.data;
+      
+      if (planetData.planets && Array.isArray(planetData.planets)) {
+        const planetPositions: any = {};
+        planetData.planets.forEach((planet: any) => {
+          planetPositions[planet.name] = {
+            name: planet.name,
+            position: planet.position || 0,
+            degree: planet.degree || 0,
+            sign: planet.sign?.name || 'Unknown',
+            house: planet.house || 1,
+            retrograde: planet.is_retrograde || false,
+            nakshatra: planet.nakshatra?.name || 'Unknown'
+          };
+        });
+        result.planets = planetPositions;
+      }
+    }
 
-    return {
-      planets,
-      houses,
-      dasha,
-      yogas,
-      predictions,
-      raw_data: data // Keep original data for debugging
-    };
+    // Process dasha periods data
+    if (combinedData.dasha_periods?.data) {
+      const dashaData = combinedData.dasha_periods.data;
+      
+      if (dashaData.current_dasha) {
+        result.dasha = {
+          current: {
+            planet: dashaData.current_dasha.planet?.name || 'Unknown',
+            start: dashaData.current_dasha.start || null,
+            end: dashaData.current_dasha.end || null,
+            duration: dashaData.current_dasha.duration || 'Unknown'
+          },
+          upcoming: dashaData.upcoming_dasha ? {
+            planet: dashaData.upcoming_dasha.planet?.name || 'Unknown',
+            start: dashaData.upcoming_dasha.start || null,
+            end: dashaData.upcoming_dasha.end || null,
+            duration: dashaData.upcoming_dasha.duration || 'Unknown'
+          } : null
+        };
+      }
+    }
+
+    // Generate comprehensive predictions based on available data
+    result.predictions.general = generateGeneralPrediction(result);
+    result.predictions.career = generateCareerPrediction(result);
+    result.predictions.health = generateHealthPrediction(result);
+    result.predictions.relationships = generateRelationshipPrediction(result);
+
+    return result;
   } catch (error) {
-    console.error('Error transforming kundali data:', error);
+    console.error('Error transforming comprehensive Kundali data:', error);
     return {
-      planets: [],
-      houses: [],
-      dasha: { current: 'Unknown', remaining: 'Unknown' },
+      planets: {},
+      houses: {},
+      dasha: {},
       yogas: [],
       predictions: {
-        general: 'Analysis based on your birth chart.',
-        career: 'Career insights will be available.',
-        health: 'Health guidance based on planetary positions.',
-        relationships: 'Relationship compatibility insights.'
+        general: 'Unable to generate analysis at this time.',
+        career: 'Career insights will be available soon.',
+        health: 'Health guidance based on your birth details.',
+        relationships: 'Relationship compatibility insights available.'
       },
-      raw_data: data
+      chart: null,
+      error: 'Failed to transform comprehensive data'
     };
   }
+}
+
+// Helper functions to generate predictions based on available data
+function generateGeneralPrediction(data: any): string {
+  const nakshatra = data.predictions?.nakshatra?.name || 'your birth nakshatra';
+  const currentDasha = data.dasha?.current?.planet || 'current planetary period';
+  
+  return `Based on your birth in ${nakshatra} nakshatra and current ${currentDasha} dasha period, this is a time of significant personal development and spiritual growth.`;
+}
+
+function generateCareerPrediction(data: any): string {
+  const yogas = data.yogas?.length || 0;
+  const currentDasha = data.dasha?.current?.planet || 'current period';
+  
+  return `With ${yogas} beneficial yogas in your chart and the current ${currentDasha} influencing your career sector, focus on professional development and new opportunities.`;
+}
+
+function generateHealthPrediction(data: any): string {
+  const mangalDosha = data.predictions?.mangal_dosha?.has_dosha ? 'Mars influence' : 'balanced planetary influence';
+  
+  return `Your health profile shows ${mangalDosha} in your birth chart. Maintain regular exercise and follow a balanced lifestyle for optimal well-being.`;
+}
+
+function generateRelationshipPrediction(data: any): string {
+  const mangalDosha = data.predictions?.mangal_dosha?.has_dosha;
+  const rasi = data.predictions?.rasi?.chandra || 'moon sign';
+  
+  return `With your moon in ${rasi} ${mangalDosha ? 'and Mars influence to consider' : 'and harmonious planetary positions'}, relationships require patience and understanding.`;
 }
 
 function transformPanchangData(data: any) {
