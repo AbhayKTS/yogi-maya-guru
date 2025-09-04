@@ -520,19 +520,29 @@ function transformPanchangData(data: any) {
     // Transform Prokerala panchang response (actual API structure)
     const apiData = data.data;
     
+    // Add validation logging for debugging
+    console.log('Panchang raw API data structure check:');
+    console.log('- Has sunrise:', !!apiData?.sunrise);
+    console.log('- Has sunset:', !!apiData?.sunset);
+    console.log('- Has tithi array:', Array.isArray(apiData?.tithi));
+    console.log('- Has nakshatra array:', Array.isArray(apiData?.nakshatra));
+    
     const today = new Date();
     
-    // Format times from API response
+    // Format times from API response - FIXED TIMEZONE HANDLING
     const formatTime = (dateString: string) => {
       if (!dateString) return 'Unknown';
       try {
+        // Parse the ISO string correctly maintaining timezone
         const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', { 
+        return date.toLocaleTimeString('en-IN', { 
           hour: '2-digit', 
           minute: '2-digit', 
-          hour12: true 
+          hour12: true,
+          timeZone: 'Asia/Kolkata'
         });
-      } catch {
+      } catch (error) {
+        console.error('Time formatting error:', error, 'Input:', dateString);
         return 'Unknown';
       }
     };
@@ -542,6 +552,13 @@ function transformPanchangData(data: any) {
     const currentNakshatra = apiData?.nakshatra?.[0] || {};
     const currentYoga = apiData?.yoga?.[0] || {};
     const currentKarana = apiData?.karana?.[0] || {};
+    
+    // Validate critical data exists
+    if (!apiData?.sunrise || !currentTithi.name) {
+      console.error('CRITICAL: Missing essential panchang data');
+      console.error('Sunrise present:', !!apiData?.sunrise);
+      console.error('Tithi name present:', !!currentTithi.name);
+    }
     
     return {
       date: today.toLocaleDateString('en-US', { 
