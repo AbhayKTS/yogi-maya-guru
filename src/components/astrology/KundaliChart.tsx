@@ -61,6 +61,32 @@ interface KundaliData {
     name: string;
     description?: string;
   }> | string[];
+  birth_details?: {
+    nakshatra: {
+      name: string;
+      lord: string;
+      pada: number;
+    };
+    chandra_rasi: {
+      name: string;
+      lord: string;
+    };
+    soorya_rasi: {
+      name: string;
+      lord: string;
+    };
+    zodiac: string;
+    additional_info?: {
+      deity?: string;
+      symbol?: string;
+      animal_sign?: string;
+      [key: string]: any;
+    };
+  };
+  mangal_dosha?: {
+    has_dosha: boolean;
+    description: string;
+  };
   predictions: {
     general: string;
     career: string;
@@ -343,7 +369,7 @@ export const KundaliChart = () => {
           </Card>
 
           {/* Additional Birth Details */}
-          {kundaliData.predictions?.nakshatra && (
+          {kundaliData.birth_details?.nakshatra && (
             <Card className="card-sacred">
               <CardHeader>
                 <CardTitle>Birth Star Details</CardTitle>
@@ -353,41 +379,56 @@ export const KundaliChart = () => {
                   <div>
                     <h4 className="font-semibold text-wisdom mb-2">Nakshatra</h4>
                     <p className="text-sm">
-                      <span className="font-medium">{kundaliData.predictions.nakshatra.name || 'Unknown'}</span>
-                      {kundaliData.predictions.nakshatra.pada && (
+                      <span className="font-medium">{kundaliData.birth_details.nakshatra.name || 'Unknown'}</span>
+                      {kundaliData.birth_details.nakshatra.pada && (
                         <>
                           {' (Pada '}
-                          {kundaliData.predictions.nakshatra.pada}
+                          {kundaliData.birth_details.nakshatra.pada}
                           {')'}
                         </>
                       )}
                     </p>
-                    {kundaliData.predictions.nakshatra.lord && (
+                    {kundaliData.birth_details.nakshatra.lord && (
                       <p className="text-xs text-muted-foreground">
-                        Lord: {kundaliData.predictions.nakshatra.lord}
+                        Lord: {kundaliData.birth_details.nakshatra.lord}
                       </p>
                     )}
-                    {kundaliData.predictions.nakshatra.deity && (
+                    {kundaliData.birth_details.additional_info?.deity && (
                       <p className="text-xs text-muted-foreground">
-                        Deity: {kundaliData.predictions.nakshatra.deity}
+                        Deity: {kundaliData.birth_details.additional_info.deity}
+                      </p>
+                    )}
+                    {kundaliData.birth_details.additional_info?.symbol && (
+                      <p className="text-xs text-muted-foreground">
+                        Symbol: {kundaliData.birth_details.additional_info.symbol}
                       </p>
                     )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-wisdom mb-2">Rasi Details</h4>
-                    {kundaliData.predictions.rasi?.chandra && (
+                    {kundaliData.birth_details.chandra_rasi && (
                       <p className="text-sm">
-                        Chandra Rasi: <span className="font-medium">{kundaliData.predictions.rasi.chandra}</span>
+                        Chandra Rasi: <span className="font-medium">{kundaliData.birth_details.chandra_rasi.name}</span>
+                        {kundaliData.birth_details.chandra_rasi.lord && (
+                          <span className="text-xs text-muted-foreground block">
+                            Lord: {kundaliData.birth_details.chandra_rasi.lord}
+                          </span>
+                        )}
                       </p>
                     )}
-                    {kundaliData.predictions.rasi?.soorya && (
-                      <p className="text-sm">
-                        Soorya Rasi: <span className="font-medium">{kundaliData.predictions.rasi.soorya}</span>
+                    {kundaliData.birth_details.soorya_rasi && (
+                      <p className="text-sm mt-2">
+                        Soorya Rasi: <span className="font-medium">{kundaliData.birth_details.soorya_rasi.name}</span>
+                        {kundaliData.birth_details.soorya_rasi.lord && (
+                          <span className="text-xs text-muted-foreground block">
+                            Lord: {kundaliData.birth_details.soorya_rasi.lord}
+                          </span>
+                        )}
                       </p>
                     )}
-                    {kundaliData.predictions.rasi?.zodiac && (
-                      <p className="text-sm">
-                        Zodiac: <span className="font-medium">{kundaliData.predictions.rasi.zodiac}</span>
+                    {kundaliData.birth_details.zodiac && (
+                      <p className="text-sm mt-2">
+                        Zodiac: <span className="font-medium">{kundaliData.birth_details.zodiac}</span>
                       </p>
                     )}
                   </div>
@@ -397,7 +438,7 @@ export const KundaliChart = () => {
           )}
 
           {/* Mangal Dosha */}
-          {kundaliData.predictions?.mangal_dosha && (
+          {kundaliData.mangal_dosha && (
             <Card className="card-sacred">
               <CardHeader>
                 <CardTitle>Mangal Dosha Analysis</CardTitle>
@@ -405,14 +446,14 @@ export const KundaliChart = () => {
               <CardContent>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge 
-                    variant={kundaliData.predictions.mangal_dosha.has_dosha ? "destructive" : "outline"}
+                    variant={kundaliData.mangal_dosha.has_dosha ? "destructive" : "outline"}
                   >
-                    {kundaliData.predictions.mangal_dosha.has_dosha ? "Has Mangal Dosha" : "No Mangal Dosha"}
+                    {kundaliData.mangal_dosha.has_dosha ? "Has Mangal Dosha" : "No Mangal Dosha"}
                   </Badge>
                 </div>
-                {kundaliData.predictions.mangal_dosha.description && (
+                {kundaliData.mangal_dosha.description && (
                   <p className="text-sm text-muted-foreground">
-                    {kundaliData.predictions.mangal_dosha.description}
+                    {kundaliData.mangal_dosha.description}
                   </p>
                 )}
               </CardContent>

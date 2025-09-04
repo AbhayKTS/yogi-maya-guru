@@ -293,96 +293,86 @@ function transformKundliData(data: any) {
       chart: null
     };
 
-    // Extract data from main kundli response
+    // Extract data from main kundli response - using actual API structure
     const kundliData = data.data;
     
-    // Handle planet positions from kundli response
-    if (kundliData?.planets || kundliData?.planet_position) {
-      const planetData = kundliData.planets || kundliData.planet_position;
-      const planetPositions: any = {};
+    // Handle nakshatra details (birth star information)
+    if (kundliData?.nakshatra_details) {
+      const nakshatraDetails = kundliData.nakshatra_details;
       
-      if (Array.isArray(planetData)) {
-        planetData.forEach((planet: any) => {
-          planetPositions[planet.name] = {
-            name: planet.name,
-            longitude: planet.longitude || 0,
-            degree: planet.degree || 0,
-            position: planet.position || planet.house || 1,
-            sign: planet.rasi?.name || planet.sign || 'Unknown',
-            house: planet.position || planet.house || 1,
-            retrograde: planet.is_retrograde || planet.retrograde || false,
-            rasi_id: planet.rasi?.id || 0,
-            rasi_lord: planet.rasi?.lord?.name || 'Unknown'
-          };
-        });
-      } else if (typeof planetData === 'object') {
-        Object.entries(planetData).forEach(([name, planet]: [string, any]) => {
-          planetPositions[name] = {
-            name,
-            longitude: planet.longitude || 0,
-            degree: planet.degree || 0,
-            position: planet.position || planet.house || 1,
-            sign: planet.rasi?.name || planet.sign || 'Unknown',
-            house: planet.position || planet.house || 1,
-            retrograde: planet.is_retrograde || planet.retrograde || false,
-            rasi_id: planet.rasi?.id || 0,
-            rasi_lord: planet.rasi?.lord?.name || 'Unknown'
-          };
-        });
-      }
-      result.planets = planetPositions;
+      result.birth_details = {
+        nakshatra: {
+          name: nakshatraDetails.nakshatra?.name || 'Unknown',
+          lord: nakshatraDetails.nakshatra?.lord?.vedic_name || nakshatraDetails.nakshatra?.lord?.name || 'Unknown',
+          pada: nakshatraDetails.nakshatra?.pada || 0
+        },
+        chandra_rasi: {
+          name: nakshatraDetails.chandra_rasi?.name || 'Unknown',
+          lord: nakshatraDetails.chandra_rasi?.lord?.vedic_name || nakshatraDetails.chandra_rasi?.lord?.name || 'Unknown'
+        },
+        soorya_rasi: {
+          name: nakshatraDetails.soorya_rasi?.name || 'Unknown', 
+          lord: nakshatraDetails.soorya_rasi?.lord?.vedic_name || nakshatraDetails.soorya_rasi?.lord?.name || 'Unknown'
+        },
+        zodiac: nakshatraDetails.zodiac?.name || 'Unknown',
+        additional_info: nakshatraDetails.additional_info || {}
+      };
     }
 
-    // Handle dasha periods
-    if (kundliData?.dasha_periods || kundliData?.dasha) {
-      const dashaData = kundliData.dasha_periods || kundliData.dasha;
-      if (Array.isArray(dashaData) && dashaData.length > 0) {
-        const currentDasha = dashaData[0];
-        result.dasha = {
-          current: {
-            planet: currentDasha.name || 'Unknown',
-            start: currentDasha.start || null,
-            end: currentDasha.end || null,
-            duration: calculateDuration(currentDasha.start, currentDasha.end)
-          },
-          periods: dashaData.slice(0, 5).map((period: any) => ({
-            planet: period.name,
-            start: period.start,
-            end: period.end,
-            duration: calculateDuration(period.start, period.end)
-          }))
-        };
-      }
+    // Handle mangal dosha
+    if (kundliData?.mangal_dosha) {
+      result.mangal_dosha = {
+        has_dosha: kundliData.mangal_dosha.has_dosha || false,
+        description: kundliData.mangal_dosha.description || 'Analysis not available'
+      };
     }
 
-    // Handle yogas
-    if (kundliData?.yogas) {
-      result.yogas = Array.isArray(kundliData.yogas) 
-        ? kundliData.yogas.map((yoga: any) => ({
-            name: yoga.name || yoga,
-            description: yoga.description || ''
-          }))
-        : [];
+    // Handle yoga details - using actual API structure
+    if (kundliData?.yoga_details && Array.isArray(kundliData.yoga_details)) {
+      result.yogas = kundliData.yoga_details.map((yoga: any) => ({
+        name: yoga.name || 'Unknown Yoga',
+        description: yoga.description || 'Details not available'
+      }));
     }
 
-    // Generate predictions
+    // Generate dasha info (placeholder since main kundli endpoint doesn't include dasha)
+    result.dasha = {
+      current: {
+        planet: 'Analysis Pending',
+        start: null,
+        end: null,
+        duration: 'To be calculated'
+      },
+      periods: []
+    };
+
+    // Create basic planet info from nakshatra details
+    const planets: any = {};
+    if (result.birth_details?.nakshatra) {
+      planets.Moon = {
+        name: 'Moon',
+        sign: result.birth_details.chandra_rasi?.name || 'Unknown',
+        nakshatra: result.birth_details.nakshatra?.name || 'Unknown',
+        nakshatra_lord: result.birth_details.nakshatra?.lord || 'Unknown',
+        pada: result.birth_details.nakshatra?.pada || 0
+      };
+    }
+    if (result.birth_details?.soorya_rasi) {
+      planets.Sun = {
+        name: 'Sun',
+        sign: result.birth_details.soorya_rasi?.name || 'Unknown',
+        sign_lord: result.birth_details.soorya_rasi?.lord || 'Unknown'
+      };
+    }
+    result.planets = planets;
+
+    // Generate predictions based on actual data
     result.predictions = {
       general: generateGeneralPrediction(result),
       career: generateCareerPrediction(result),
       health: generateHealthPrediction(result),
       relationships: generateRelationshipPrediction(result)
     };
-
-    // Handle birth details
-    if (kundliData?.birth_details) {
-      const birthDetails = kundliData.birth_details;
-      result.predictions.nakshatra = {
-        name: birthDetails.nakshatra?.name || 'Unknown',
-        lord: birthDetails.nakshatra?.lord?.name || 'Unknown',
-        pada: birthDetails.nakshatra?.pada || 0,
-        rasi: birthDetails.rasi?.name || 'Unknown'
-      };
-    }
 
     return result;
   } catch (error) {
@@ -499,7 +489,7 @@ function getDefaultKundaliData() {
 
 // Helper functions to generate predictions based on available data
 function generateGeneralPrediction(data: any): string {
-  const nakshatra = data.predictions?.nakshatra?.name || 'your birth nakshatra';
+  const nakshatra = data.birth_details?.nakshatra?.name || 'your birth nakshatra';
   const currentDasha = data.dasha?.current?.planet || 'current planetary period';
   
   return `Based on your birth in ${nakshatra} nakshatra and current ${currentDasha} dasha period, this is a time of significant personal development and spiritual growth.`;
@@ -513,14 +503,14 @@ function generateCareerPrediction(data: any): string {
 }
 
 function generateHealthPrediction(data: any): string {
-  const mangalDosha = data.predictions?.mangal_dosha?.has_dosha ? 'Mars influence' : 'balanced planetary influence';
+  const mangalDosha = data.mangal_dosha?.has_dosha ? 'Mars influence' : 'balanced planetary influence';
   
   return `Your health profile shows ${mangalDosha} in your birth chart. Maintain regular exercise and follow a balanced lifestyle for optimal well-being.`;
 }
 
 function generateRelationshipPrediction(data: any): string {
-  const mangalDosha = data.predictions?.mangal_dosha?.has_dosha;
-  const rasi = data.predictions?.rasi?.chandra || 'moon sign';
+  const mangalDosha = data.mangal_dosha?.has_dosha;
+  const rasi = data.birth_details?.chandra_rasi?.name || 'moon sign';
   
   return `With your moon in ${rasi} ${mangalDosha ? 'and Mars influence to consider' : 'and harmonious planetary positions'}, relationships require patience and understanding.`;
 }
