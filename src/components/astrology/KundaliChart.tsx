@@ -145,9 +145,9 @@ export const KundaliChart = () => {
   // Helper function to normalize planet data
   const getPlanetsArray = (planets: any) => {
     if (Array.isArray(planets)) {
-      return planets;
+      return planets.filter(planet => planet && typeof planet === 'object');
     } else if (typeof planets === 'object' && planets !== null) {
-      return Object.values(planets);
+      return Object.values(planets).filter(planet => planet && typeof planet === 'object');
     }
     return [];
   };
@@ -156,7 +156,7 @@ export const KundaliChart = () => {
   const getYogasArray = (yogas: any) => {
     if (Array.isArray(yogas)) {
       return yogas.map(yoga => 
-        typeof yoga === 'string' ? yoga : yoga.name || 'Unknown Yoga'
+        typeof yoga === 'string' ? yoga : (yoga?.name || 'Unknown Yoga')
       );
     }
     return [];
@@ -236,32 +236,38 @@ export const KundaliChart = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getPlanetsArray(kundaliData.planets).map((planet: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      {getPlanetIcon(planet.name)}
-                      <span className="font-medium">{planet.name}</span>
-                      {planet.retrograde && (
-                        <Badge variant="outline" className="text-xs">R</Badge>
-                      )}
-                    </div>
-                    <div className="text-right text-sm">
-                      <div className="font-medium text-primary">{planet.sign}</div>
-                      <div className="text-muted-foreground">
-                        House {planet.house} • {typeof planet.degree === 'number' ? planet.degree.toFixed(1) : planet.degree}°
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getPlanetsArray(kundaliData.planets).map((planet: any, index: number) => {
+                  if (!planet || typeof planet !== 'object') return null;
+                  
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        {getPlanetIcon(planet.name || 'Unknown')}
+                        <span className="font-medium">{planet.name || 'Unknown Planet'}</span>
+                        {(planet.retrograde || planet.is_retrograde) && (
+                          <Badge variant="outline" className="text-xs">R</Badge>
+                        )}
                       </div>
-                      {planet.nakshatra && (
-                        <div className="text-xs text-muted-foreground">
-                          {planet.nakshatra}
+                      <div className="text-right text-sm">
+                        <div className="font-medium text-primary">
+                          {planet.sign || planet.rasi?.name || 'Unknown Sign'}
                         </div>
-                      )}
+                        <div className="text-muted-foreground">
+                          House {planet.house || planet.position || 'Unknown'} • {typeof planet.degree === 'number' ? planet.degree.toFixed(1) : (planet.degree || '0')}°
+                        </div>
+                        {planet.nakshatra && (
+                          <div className="text-xs text-muted-foreground">
+                            {planet.nakshatra}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -284,7 +290,7 @@ export const KundaliChart = () => {
           </Card>
 
           {/* Additional Birth Details */}
-          {kundaliData.predictions.nakshatra && (
+          {kundaliData.predictions?.nakshatra && (
             <Card className="card-sacred">
               <CardHeader>
                 <CardTitle>Birth Star Details</CardTitle>
@@ -294,29 +300,43 @@ export const KundaliChart = () => {
                   <div>
                     <h4 className="font-semibold text-wisdom mb-2">Nakshatra</h4>
                     <p className="text-sm">
-                      <span className="font-medium">{kundaliData.predictions.nakshatra.name}</span>
-                      {' (Pada '}
-                      {kundaliData.predictions.nakshatra.pada}
-                      {')'}
+                      <span className="font-medium">{kundaliData.predictions.nakshatra.name || 'Unknown'}</span>
+                      {kundaliData.predictions.nakshatra.pada && (
+                        <>
+                          {' (Pada '}
+                          {kundaliData.predictions.nakshatra.pada}
+                          {')'}
+                        </>
+                      )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Lord: {kundaliData.predictions.nakshatra.lord}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Deity: {kundaliData.predictions.nakshatra.deity}
-                    </p>
+                    {kundaliData.predictions.nakshatra.lord && (
+                      <p className="text-xs text-muted-foreground">
+                        Lord: {kundaliData.predictions.nakshatra.lord}
+                      </p>
+                    )}
+                    {kundaliData.predictions.nakshatra.deity && (
+                      <p className="text-xs text-muted-foreground">
+                        Deity: {kundaliData.predictions.nakshatra.deity}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-wisdom mb-2">Rasi Details</h4>
-                    <p className="text-sm">
-                      Chandra Rasi: <span className="font-medium">{kundaliData.predictions.rasi?.chandra}</span>
-                    </p>
-                    <p className="text-sm">
-                      Soorya Rasi: <span className="font-medium">{kundaliData.predictions.rasi?.soorya}</span>
-                    </p>
-                    <p className="text-sm">
-                      Zodiac: <span className="font-medium">{kundaliData.predictions.rasi?.zodiac}</span>
-                    </p>
+                    {kundaliData.predictions.rasi?.chandra && (
+                      <p className="text-sm">
+                        Chandra Rasi: <span className="font-medium">{kundaliData.predictions.rasi.chandra}</span>
+                      </p>
+                    )}
+                    {kundaliData.predictions.rasi?.soorya && (
+                      <p className="text-sm">
+                        Soorya Rasi: <span className="font-medium">{kundaliData.predictions.rasi.soorya}</span>
+                      </p>
+                    )}
+                    {kundaliData.predictions.rasi?.zodiac && (
+                      <p className="text-sm">
+                        Zodiac: <span className="font-medium">{kundaliData.predictions.rasi.zodiac}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -324,7 +344,7 @@ export const KundaliChart = () => {
           )}
 
           {/* Mangal Dosha */}
-          {kundaliData.predictions.mangal_dosha && (
+          {kundaliData.predictions?.mangal_dosha && (
             <Card className="card-sacred">
               <CardHeader>
                 <CardTitle>Mangal Dosha Analysis</CardTitle>
@@ -337,9 +357,11 @@ export const KundaliChart = () => {
                     {kundaliData.predictions.mangal_dosha.has_dosha ? "Has Mangal Dosha" : "No Mangal Dosha"}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {kundaliData.predictions.mangal_dosha.description}
-                </p>
+                {kundaliData.predictions.mangal_dosha.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {kundaliData.predictions.mangal_dosha.description}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
@@ -368,6 +390,7 @@ export const KundaliChart = () => {
             {kundaliData.predictions && Object.entries(kundaliData.predictions)
               .filter(([category, prediction]) => 
                 typeof prediction === 'string' && 
+                prediction && 
                 ['general', 'career', 'health', 'relationships'].includes(category)
               )
               .map(([category, prediction]) => (
