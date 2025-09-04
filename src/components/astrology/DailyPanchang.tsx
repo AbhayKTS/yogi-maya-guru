@@ -158,7 +158,62 @@ export const DailyPanchang = () => {
     );
   }
 
-  if (!panchangData) return null;
+  // Add comprehensive null checks and safe access
+  if (!panchangData) {
+    return (
+      <div className="space-y-6">
+        <Card className="card-golden">
+          <CardContent className="p-8 text-center">
+            <h3 className="text-lg font-semibold mb-2">No Panchang Data Available</h3>
+            <p className="text-muted-foreground mb-4">Unable to load cosmic data at this time.</p>
+            <button 
+              onClick={refreshPanchang}
+              className="text-primary hover:text-primary/80 flex items-center gap-1 mx-auto"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try Again
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Safe access with fallbacks
+  const safeData = {
+    date: panchangData?.date || new Date().toLocaleDateString(),
+    sunrise: panchangData?.sunrise || 'N/A',
+    sunset: panchangData?.sunset || 'N/A',
+    moonrise: panchangData?.moonrise || 'N/A',
+    moonset: panchangData?.moonset || 'N/A',
+    tithi: {
+      name: panchangData?.tithi?.name || 'N/A',
+      endTime: panchangData?.tithi?.endTime || 'N/A'
+    },
+    nakshatra: {
+      name: panchangData?.nakshatra?.name || 'N/A',
+      endTime: panchangData?.nakshatra?.endTime || 'N/A'
+    },
+    yoga: {
+      name: panchangData?.yoga?.name || 'N/A',
+      endTime: panchangData?.yoga?.endTime || 'N/A'
+    },
+    karana: {
+      name: panchangData?.karana?.name || 'N/A',
+      endTime: panchangData?.karana?.endTime || 'N/A'
+    },
+    auspiciousTimes: {
+      brahmaMuhurta: panchangData?.auspiciousTimes?.brahmaMuhurta || 'N/A',
+      abhijitMuhurta: panchangData?.auspiciousTimes?.abhijitMuhurta || 'N/A',
+      godhuliBela: panchangData?.auspiciousTimes?.godhuliBela || 'N/A'
+    },
+    inauspiciousTimes: {
+      rahukaal: panchangData?.inauspiciousTimes?.rahukaal || 'N/A',
+      yamaghanta: panchangData?.inauspiciousTimes?.yamaghanta || 'N/A',
+      gulikai: panchangData?.inauspiciousTimes?.gulikai || 'N/A'
+    },
+    recommendations: panchangData?.recommendations || ['No recommendations available']
+  };
 
   return (
     <div className="space-y-6">
@@ -172,7 +227,7 @@ export const DailyPanchang = () => {
             Today's Panchang
           </CardTitle>
           <p className="text-foreground/80 mb-2">
-            {panchangData.date}
+            {safeData.date}
           </p>
           <button 
             onClick={refreshPanchang}
@@ -208,11 +263,11 @@ export const DailyPanchang = () => {
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Sunrise</span>
-              <span className="font-semibold">{panchangData.sunrise}</span>
+              <span className="font-semibold">{safeData.sunrise}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Sunset</span>
-              <span className="font-semibold">{panchangData.sunset}</span>
+              <span className="font-semibold">{safeData.sunset}</span>
             </div>
           </CardContent>
         </Card>
@@ -227,11 +282,11 @@ export const DailyPanchang = () => {
           <CardContent className="space-y-3">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Moonrise</span>
-              <span className="font-semibold">{panchangData.moonrise}</span>
+              <span className="font-semibold">{safeData.moonrise}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Moonset</span>
-              <span className="font-semibold">{panchangData.moonset}</span>
+              <span className="font-semibold">{safeData.moonset}</span>
             </div>
           </CardContent>
         </Card>
@@ -242,9 +297,9 @@ export const DailyPanchang = () => {
         <Card className="card-spiritual">
           <CardContent className="p-4 text-center">
             <h3 className="font-semibold text-white mb-2">Tithi</h3>
-            <p className="text-white/90 text-lg">{panchangData.tithi.name}</p>
+            <p className="text-white/90 text-lg">{safeData.tithi.name}</p>
             <p className="text-white/70 text-xs mt-1">
-              Until {panchangData.tithi.endTime}
+              Until {safeData.tithi.endTime}
             </p>
           </CardContent>
         </Card>
@@ -252,9 +307,9 @@ export const DailyPanchang = () => {
         <Card className="card-healing">
           <CardContent className="p-4 text-center">
             <h3 className="font-semibold text-white mb-2">Nakshatra</h3>
-            <p className="text-white/90 text-lg">{panchangData.nakshatra.name}</p>
+            <p className="text-white/90 text-lg">{safeData.nakshatra.name}</p>
             <p className="text-white/70 text-xs mt-1">
-              Until {panchangData.nakshatra.endTime}
+              Until {safeData.nakshatra.endTime}
             </p>
           </CardContent>
         </Card>
@@ -262,9 +317,9 @@ export const DailyPanchang = () => {
         <Card className="card-wisdom">
           <CardContent className="p-4 text-center">
             <h3 className="font-semibold text-white mb-2">Yoga</h3>
-            <p className="text-white/90 text-lg">{panchangData.yoga.name}</p>
+            <p className="text-white/90 text-lg">{safeData.yoga.name}</p>
             <p className="text-white/70 text-xs mt-1">
-              Until {panchangData.yoga.endTime}
+              Until {safeData.yoga.endTime}
             </p>
           </CardContent>
         </Card>
@@ -272,9 +327,9 @@ export const DailyPanchang = () => {
         <Card className="card-golden">
           <CardContent className="p-4 text-center">
             <h3 className="font-semibold text-foreground mb-2">Karana</h3>
-            <p className="text-foreground/90 text-lg">{panchangData.karana.name}</p>
+            <p className="text-foreground/90 text-lg">{safeData.karana.name}</p>
             <p className="text-foreground/70 text-xs mt-1">
-              Until {panchangData.karana.endTime}
+              Until {safeData.karana.endTime}
             </p>
           </CardContent>
         </Card>
@@ -292,17 +347,17 @@ export const DailyPanchang = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-3 bg-green-100 rounded-lg">
               <h4 className="font-semibold text-green-800 mb-1">Brahma Muhurta</h4>
-              <p className="text-green-700">{panchangData.auspiciousTimes.brahmaMuhurta}</p>
+              <p className="text-green-700">{safeData.auspiciousTimes.brahmaMuhurta}</p>
               <p className="text-xs text-green-600 mt-1">Best for meditation</p>
             </div>
             <div className="text-center p-3 bg-green-100 rounded-lg">
               <h4 className="font-semibold text-green-800 mb-1">Abhijit Muhurta</h4>
-              <p className="text-green-700">{panchangData.auspiciousTimes.abhijitMuhurta}</p>
+              <p className="text-green-700">{safeData.auspiciousTimes.abhijitMuhurta}</p>
               <p className="text-xs text-green-600 mt-1">Victory time</p>
             </div>
             <div className="text-center p-3 bg-green-100 rounded-lg">
               <h4 className="font-semibold text-green-800 mb-1">Godhuli Bela</h4>
-              <p className="text-green-700">{panchangData.auspiciousTimes.godhuliBela}</p>
+              <p className="text-green-700">{safeData.auspiciousTimes.godhuliBela}</p>
               <p className="text-xs text-green-600 mt-1">Evening prayers</p>
             </div>
           </div>
@@ -321,15 +376,15 @@ export const DailyPanchang = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-3 bg-red-100 rounded-lg">
               <h4 className="font-semibold text-red-800 mb-1">Rahu Kaal</h4>
-              <p className="text-red-700">{panchangData.inauspiciousTimes.rahukaal}</p>
+              <p className="text-red-700">{safeData.inauspiciousTimes.rahukaal}</p>
             </div>
             <div className="text-center p-3 bg-red-100 rounded-lg">
               <h4 className="font-semibold text-red-800 mb-1">Yama Ghanta</h4>
-              <p className="text-red-700">{panchangData.inauspiciousTimes.yamaghanta}</p>
+              <p className="text-red-700">{safeData.inauspiciousTimes.yamaghanta}</p>
             </div>
             <div className="text-center p-3 bg-red-100 rounded-lg">
               <h4 className="font-semibold text-red-800 mb-1">Gulikai</h4>
-              <p className="text-red-700">{panchangData.inauspiciousTimes.gulikai}</p>
+              <p className="text-red-700">{safeData.inauspiciousTimes.gulikai}</p>
             </div>
           </div>
         </CardContent>
@@ -342,7 +397,7 @@ export const DailyPanchang = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {panchangData.recommendations.map((recommendation, index) => (
+            {safeData.recommendations.map((recommendation, index) => (
               <div key={index} className="flex items-start gap-2">
                 <Star className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                 <p className="text-foreground/80">{recommendation}</p>
