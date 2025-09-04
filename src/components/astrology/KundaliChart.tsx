@@ -108,12 +108,20 @@ export const KundaliChart = () => {
     setError('');
 
     try {
+      console.log('Generating kundali with details:', {
+        date: profile.birth_date,
+        time: profile.birth_time,
+        place: profile.birth_place
+      });
+
       // Use real Prokerala API for kundali generation
       const result = await AstrologyAPI.getKundali(
         profile.birth_date,
         profile.birth_time,
         profile.birth_place
       );
+
+      console.log('API result:', result);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to generate kundali');
@@ -123,16 +131,18 @@ export const KundaliChart = () => {
       setKundaliData(result.data);
       
       toast({
-        title: "Kundali Generated",
-        description: "Your Vedic birth chart has been created successfully.",
+        title: "Kundali Generated Successfully",
+        description: "Your Vedic birth chart has been created with accurate planetary positions.",
       });
 
     } catch (error: any) {
       console.error('Error generating kundali:', error);
-      setError('Failed to generate kundali. Please try again.');
+      const errorMessage = error.message || 'Failed to generate kundali';
+      setError(errorMessage);
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate your kundali. Please try again.",
+        title: "Unable to Generate Kundali",
+        description: "Please check your internet connection and try again. If the problem persists, the astrology service may be temporarily unavailable.",
         variant: "destructive"
       });
     } finally {

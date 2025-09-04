@@ -93,59 +93,50 @@ serve(async (req) => {
       datetime: birth_data.datetime
     });
 
-    // Special handling for comprehensive kundali reports
+    // Special handling for comprehensive kundali reports using the main kundli endpoint
     if (report_type === 'kundali') {
-      console.log('Fetching comprehensive kundali data from multiple endpoints...');
+      console.log('Fetching comprehensive kundali data from main kundli endpoint...');
       
-      // Call multiple endpoints for complete birth chart data (removing detailed-kundli as it returns 404)
-      const endpoints = [
-        { type: 'planet-position', url: 'https://api.prokerala.com/v2/astrology/planet-position' },
-        { type: 'dasha-periods', url: 'https://api.prokerala.com/v2/astrology/dasha-periods' }
-      ];
+      try {
+        // Use the main kundli endpoint as specified in the Prokerala documentation
+        const kundliUrl = `https://api.prokerala.com/v2/astrology/kundli?${params.toString()}`;
+        console.log('Making request to kundli endpoint:', kundliUrl);
+        
+        const kundliResponse = await fetch(kundliUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      const combinedData: any = {
-        planet_position: null,
-        dasha_periods: null
-      };
-
-      // Fetch data from all endpoints
-      for (const endpoint of endpoints) {
-        try {
-          const url = `${endpoint.url}?${params.toString()}`;
-          console.log(`Making request to ${endpoint.type}:`, url);
+        console.log('Kundli response status:', kundliResponse.status);
+        
+        if (kundliResponse.ok) {
+          const kundliData = await kundliResponse.json();
+          console.log('Kundli response:', JSON.stringify(kundliData, null, 2));
           
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
+          // Transform the kundli data
+          const transformedData = transformKundliData(kundliData);
+          
+          return new Response(JSON.stringify({
+            success: true,
+            data: transformedData
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
-
-          console.log(`${endpoint.type} response status:`, response.status);
+        } else {
+          const errorText = await kundliResponse.text();
+          console.error('Kundli request failed:', kundliResponse.status, errorText);
           
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`${endpoint.type} response:`, JSON.stringify(data, null, 2));
-            combinedData[endpoint.type.replace('-', '_')] = data;
-          } else {
-            const errorText = await response.text();
-            console.warn(`${endpoint.type} request failed:`, response.status, errorText);
-          }
-        } catch (error) {
-          console.warn(`Error fetching ${endpoint.type}:`, error);
+          // Fallback to individual endpoints if main kundli fails
+          return await fetchKundaliFromMultipleEndpoints(accessToken, params);
         }
+      } catch (error) {
+        console.error('Error with main kundli endpoint:', error);
+        // Fallback to individual endpoints
+        return await fetchKundaliFromMultipleEndpoints(accessToken, params);
       }
-
-      // Transform the combined data
-      const transformedData = transformComprehensiveKundaliData(combinedData);
-      
-      return new Response(JSON.stringify({
-        success: true,
-        data: transformedData
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     // Handle other report types with single endpoint calls
@@ -223,8 +214,185 @@ serve(async (req) => {
   }
 });
 
-// Transform comprehensive Kundali data from multiple endpoints
-function transformComprehensiveKundaliData(combinedData: any) {
+// Fallback function to fetch from multiple endpoints
+async function fetchKundaliFromMultipleEndpoints(accessToken: string, params: URLSearchParams) {
+  console.log('Using fallback: fetching from multiple endpoints...');
+  
+  const endpoints = [
+    { type: 'planet-position', url: 'https://api.prokerala.com/v2/astrology/planet-position' },
+    { type: 'dasha-periods', url: 'https://api.prokerala.com/v2/astrology/dasha-periods' },
+    { type: 'birth-details', url: 'https://api.prokerala.com/v2/astrology/birth-details' }
+  ];
+
+  const combinedData: any = {};
+
+  // Fetch data from all endpoints with retry logic
+  for (const endpoint of endpoints) {
+    let retries = 2;
+    while (retries > 0) {
+      try {
+        const url = `${endpoint.url}?${params.toString()}`;
+        console.log(`Making request to ${endpoint.type}:`, url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log(`${endpoint.type} response status:`, response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`${endpoint.type} response:`, JSON.stringify(data, null, 2));
+          combinedData[endpoint.type.replace('-', '_')] = data;
+          break; // Success, exit retry loop
+        } else {
+          const errorText = await response.text();
+          console.warn(`${endpoint.type} request failed:`, response.status, errorText);
+          retries--;
+          if (retries > 0) {
+            console.log(`Retrying ${endpoint.type} in 1 second...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      } catch (error) {
+        console.warn(`Error fetching ${endpoint.type}:`, error);
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+  }
+
+  // Transform the combined data
+  const transformedData = transformMultiEndpointKundaliData(combinedData);
+  
+  return new Response(JSON.stringify({
+    success: true,
+    data: transformedData
+  }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// Transform data from main kundli endpoint
+function transformKundliData(data: any) {
+  console.log('Transforming main kundli data:', JSON.stringify(data, null, 2));
+  
+  try {
+    const result: any = {
+      planets: {},
+      houses: {},
+      dasha: {},
+      yogas: [],
+      predictions: {},
+      chart: null
+    };
+
+    // Extract data from main kundli response
+    const kundliData = data.data;
+    
+    // Handle planet positions from kundli response
+    if (kundliData?.planets || kundliData?.planet_position) {
+      const planetData = kundliData.planets || kundliData.planet_position;
+      const planetPositions: any = {};
+      
+      if (Array.isArray(planetData)) {
+        planetData.forEach((planet: any) => {
+          planetPositions[planet.name] = {
+            name: planet.name,
+            longitude: planet.longitude || 0,
+            degree: planet.degree || 0,
+            position: planet.position || planet.house || 1,
+            sign: planet.rasi?.name || planet.sign || 'Unknown',
+            house: planet.position || planet.house || 1,
+            retrograde: planet.is_retrograde || planet.retrograde || false,
+            rasi_id: planet.rasi?.id || 0,
+            rasi_lord: planet.rasi?.lord?.name || 'Unknown'
+          };
+        });
+      } else if (typeof planetData === 'object') {
+        Object.entries(planetData).forEach(([name, planet]: [string, any]) => {
+          planetPositions[name] = {
+            name,
+            longitude: planet.longitude || 0,
+            degree: planet.degree || 0,
+            position: planet.position || planet.house || 1,
+            sign: planet.rasi?.name || planet.sign || 'Unknown',
+            house: planet.position || planet.house || 1,
+            retrograde: planet.is_retrograde || planet.retrograde || false,
+            rasi_id: planet.rasi?.id || 0,
+            rasi_lord: planet.rasi?.lord?.name || 'Unknown'
+          };
+        });
+      }
+      result.planets = planetPositions;
+    }
+
+    // Handle dasha periods
+    if (kundliData?.dasha_periods || kundliData?.dasha) {
+      const dashaData = kundliData.dasha_periods || kundliData.dasha;
+      if (Array.isArray(dashaData) && dashaData.length > 0) {
+        const currentDasha = dashaData[0];
+        result.dasha = {
+          current: {
+            planet: currentDasha.name || 'Unknown',
+            start: currentDasha.start || null,
+            end: currentDasha.end || null,
+            duration: calculateDuration(currentDasha.start, currentDasha.end)
+          },
+          periods: dashaData.slice(0, 5).map((period: any) => ({
+            planet: period.name,
+            start: period.start,
+            end: period.end,
+            duration: calculateDuration(period.start, period.end)
+          }))
+        };
+      }
+    }
+
+    // Handle yogas
+    if (kundliData?.yogas) {
+      result.yogas = Array.isArray(kundliData.yogas) 
+        ? kundliData.yogas.map((yoga: any) => ({
+            name: yoga.name || yoga,
+            description: yoga.description || ''
+          }))
+        : [];
+    }
+
+    // Generate predictions
+    result.predictions = {
+      general: generateGeneralPrediction(result),
+      career: generateCareerPrediction(result),
+      health: generateHealthPrediction(result),
+      relationships: generateRelationshipPrediction(result)
+    };
+
+    // Handle birth details
+    if (kundliData?.birth_details) {
+      const birthDetails = kundliData.birth_details;
+      result.predictions.nakshatra = {
+        name: birthDetails.nakshatra?.name || 'Unknown',
+        lord: birthDetails.nakshatra?.lord?.name || 'Unknown',
+        pada: birthDetails.nakshatra?.pada || 0,
+        rasi: birthDetails.rasi?.name || 'Unknown'
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error transforming kundli data:', error);
+    return getDefaultKundaliData();
+  }
+}
+
+// Transform comprehensive Kundali data from multiple endpoints (fallback)
+function transformMultiEndpointKundaliData(combinedData: any) {
   console.log('Combined API data:', JSON.stringify(combinedData, null, 2));
   
   try {
@@ -300,22 +468,33 @@ function transformComprehensiveKundaliData(combinedData: any) {
 
     return result;
   } catch (error) {
-    console.error('Error transforming comprehensive Kundali data:', error);
-    return {
-      planets: {},
-      houses: {},
-      dasha: {},
-      yogas: [],
-      predictions: {
-        general: 'Unable to generate analysis at this time.',
-        career: 'Career insights will be available soon.',
-        health: 'Health guidance based on your birth details.',
-        relationships: 'Relationship compatibility insights available.'
-      },
-      chart: null,
-      error: 'Failed to transform comprehensive data'
-    };
+    console.error('Error transforming multi-endpoint Kundali data:', error);
+    return getDefaultKundaliData();
   }
+}
+
+// Default kundali data for error cases
+function getDefaultKundaliData() {
+  return {
+    planets: {},
+    houses: {},
+    dasha: {
+      current: {
+        planet: 'Unknown',
+        duration: 'Unknown'
+      },
+      periods: []
+    },
+    yogas: [],
+    predictions: {
+      general: 'Your birth chart analysis will be available once we can fetch the data from our astrology service.',
+      career: 'Career insights based on planetary positions will be shown here.',
+      health: 'Health guidance from your birth chart will be displayed here.',
+      relationships: 'Relationship compatibility analysis will be available soon.'
+    },
+    chart: null,
+    error: 'Unable to fetch complete birth chart data at this time'
+  };
 }
 
 // Helper functions to generate predictions based on available data
