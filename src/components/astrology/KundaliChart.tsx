@@ -50,6 +50,12 @@ interface KundaliData {
       end?: string;
       duration?: string;
     };
+    periods?: Array<{
+      planet: string;
+      start?: string;
+      end?: string;
+      duration?: string;
+    }>;
   };
   yogas: Array<{
     name: string;
@@ -144,19 +150,26 @@ export const KundaliChart = () => {
 
   // Helper function to normalize planet data
   const getPlanetsArray = (planets: any) => {
+    if (!planets) return [];
+    
     if (Array.isArray(planets)) {
       return planets.filter(planet => planet && typeof planet === 'object');
     } else if (typeof planets === 'object' && planets !== null) {
-      return Object.values(planets).filter(planet => planet && typeof planet === 'object');
+      return Object.entries(planets).map(([name, data]: [string, any]) => ({
+        name,
+        ...data
+      })).filter(planet => planet && typeof planet === 'object');
     }
     return [];
   };
 
   // Helper function to normalize yoga data
   const getYogasArray = (yogas: any) => {
+    if (!yogas) return [];
+    
     if (Array.isArray(yogas)) {
       return yogas.map(yoga => 
-        typeof yoga === 'string' ? yoga : (yoga?.name || 'Unknown Yoga')
+        typeof yoga === 'string' ? { name: yoga, description: '' } : yoga
       );
     }
     return [];
@@ -164,16 +177,27 @@ export const KundaliChart = () => {
 
   // Helper function to get current dasha information
   const getCurrentDasha = (dasha: any) => {
-    if (typeof dasha?.current === 'object') {
+    if (!dasha) return { planet: 'Unknown', remaining: 'Unknown' };
+    
+    if (typeof dasha?.current === 'object' && dasha.current) {
       return {
         planet: dasha.current.planet || 'Unknown',
-        remaining: dasha.current.duration || dasha.remaining || 'Unknown'
+        remaining: dasha.current.duration || 'Unknown'
       };
     }
     return {
       planet: dasha?.current || 'Unknown Dasha',
       remaining: dasha?.remaining || 'Unknown'
     };
+  };
+
+  // Helper function to safely get nested values
+  const safeGet = (obj: any, path: string, defaultValue: any = 'Unknown') => {
+    try {
+      return path.split('.').reduce((current, key) => current?.[key], obj) ?? defaultValue;
+    } catch {
+      return defaultValue;
+    }
   };
 
   if (!profile?.birth_date || !profile?.birth_time || !profile?.birth_place) {
@@ -242,7 +266,7 @@ export const KundaliChart = () => {
                   
                   return (
                     <div
-                      key={index}
+                      key={planet.name || index}
                       className="flex items-center justify-between p-3 bg-muted/20 rounded-lg"
                     >
                       <div className="flex items-center gap-2">
@@ -254,20 +278,27 @@ export const KundaliChart = () => {
                       </div>
                       <div className="text-right text-sm">
                         <div className="font-medium text-primary">
-                          {planet.sign || planet.rasi?.name || 'Unknown Sign'}
+                          {planet.sign || planet.rasi?.name || safeGet(planet, 'rasi_lord', 'Unknown Sign')}
                         </div>
                         <div className="text-muted-foreground">
-                          House {planet.house || planet.position || 'Unknown'} • {typeof planet.degree === 'number' ? planet.degree.toFixed(1) : (planet.degree || '0')}°
+                          House {planet.house || planet.position || 1} • {
+                            typeof planet.degree === 'number' 
+                              ? planet.degree.toFixed(1) 
+                              : (parseFloat(planet.degree || '0') || 0).toFixed(1)
+                          }°
                         </div>
-                        {planet.nakshatra && (
-                          <div className="text-xs text-muted-foreground">
-                            {planet.nakshatra}
-                          </div>
-                        )}
+                        <div className="text-xs text-muted-foreground">
+                          {safeGet(planet, 'longitude', 0) ? `Long: ${parseFloat(safeGet(planet, 'longitude', 0)).toFixed(1)}°` : ''}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
+                {getPlanetsArray(kundaliData.planets).length === 0 && (
+                  <div className="col-span-full text-center text-muted-foreground">
+                    <p>No planetary positions available. Try regenerating your kundali.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -280,11 +311,23 @@ export const KundaliChart = () => {
             <CardContent>
               <div className="text-center space-y-2">
                 <div className="text-2xl font-bold text-primary">
-                  {getCurrentDasha(kundaliData.dasha).planet}
+                  {getCurrentDasha(kundaliData.dasha).planet} Dasha
                 </div>
                 <div className="text-muted-foreground">
-                  Remaining: {getCurrentDasha(kundaliData.dasha).remaining}
+                  Duration: {getCurrentDasha(kundaliData.dasha).remaining}
                 </div>
+                {kundaliData.dasha?.periods && kundaliData.dasha.periods.length > 0 && (
+                  <div className="mt-4 text-sm">
+                    <h4 className="font-semibold mb-2">Upcoming Periods:</h4>
+                    <div className="space-y-1">
+                      {kundaliData.dasha.periods.slice(1, 3).map((period: any, index: number) => (
+                        <div key={index} className="text-muted-foreground">
+                          {period.planet}: {period.duration}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -372,11 +415,18 @@ export const KundaliChart = () => {
               <CardTitle>Beneficial Yogas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {getYogasArray(kundaliData.yogas).map((yoga: string, index: number) => (
-                  <Badge key={index} className="bg-spiritual text-white">
-                    {yoga}
-                  </Badge>
+              <div className="space-y-3">
+                {getYogasArray(kundaliData.yogas).map((yoga: any, index: number) => (
+                  <div key={index} className="border-l-4 border-spiritual pl-4">
+                    <div className="font-medium text-spiritual">
+                      {yoga.name || yoga}
+                    </div>
+                    {yoga.description && (
+                      <div className="text-sm text-muted-foreground">
+                        {yoga.description}
+                      </div>
+                    )}
+                  </div>
                 ))}
                 {getYogasArray(kundaliData.yogas).length === 0 && (
                   <p className="text-muted-foreground text-sm">No specific yogas found in current analysis.</p>
