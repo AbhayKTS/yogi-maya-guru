@@ -130,6 +130,7 @@ export const KundaliChart = () => {
       return;
     }
 
+    console.log('=== FRONTEND: GENERATING KUNDALI ===');
     setIsLoading(true);
     setError('');
 
@@ -147,24 +148,74 @@ export const KundaliChart = () => {
         profile.birth_place
       );
 
-      console.log('API result:', result);
+      console.log('=== KUNDALI API RESPONSE RECEIVED ===');
+      console.log('Success status:', result.success);
+      console.log('Has data:', !!result.data);
 
       if (!result.success) {
+        console.error('Kundali API returned failure:', result.error);
         throw new Error(result.error || 'Failed to generate kundali');
       }
 
+      if (!result.data) {
+        console.error('Kundali API success but no data returned');
+        throw new Error('No kundali data received from server');
+      }
+
+      // COMPREHENSIVE KUNDALI DATA VALIDATION
+      const data = result.data;
+      console.log('=== VALIDATING KUNDALI DATA ===');
+      console.log('Data keys present:', Object.keys(data));
+      console.log('Has planets:', !!data.planets, 'Type:', typeof data.planets);
+      console.log('Has birth_details:', !!data.birth_details);
+      console.log('Has mangal_dosha:', !!data.mangal_dosha);
+      console.log('Has yogas:', !!data.yogas, 'Length:', Array.isArray(data.yogas) ? data.yogas.length : 'Not array');
+      console.log('Has predictions:', !!data.predictions);
+
+      // Check for critical kundali data
+      const criticalKundaliFields = [
+        { key: 'birth_details.nakshatra.name', value: data.birth_details?.nakshatra?.name },
+        { key: 'birth_details.chandra_rasi.name', value: data.birth_details?.chandra_rasi?.name },
+        { key: 'mangal_dosha.has_dosha', value: data.mangal_dosha?.has_dosha !== undefined },
+        { key: 'predictions.general', value: data.predictions?.general }
+      ];
+
+      const missingKundaliData = criticalKundaliFields.filter(field => {
+        if (field.key === 'mangal_dosha.has_dosha') {
+          return !field.value; // Boolean check
+        }
+        return !field.value || field.value === 'Unknown' || field.value === 'N/A';
+      });
+
+      if (missingKundaliData.length > 0) {
+        console.warn('=== SOME KUNDALI DATA MISSING ===');
+        missingKundaliData.forEach(field => {
+          console.warn(`Missing: ${field.key}`);
+        });
+        setError('Some kundali details may be incomplete.');
+      } else {
+        console.log('=== ALL CRITICAL KUNDALI DATA PRESENT ===');
+      }
+
       // Use the transformed data from the API
-      setKundaliData(result.data);
+      setKundaliData(data);
+      console.log('=== KUNDALI DATA STORED SUCCESSFULLY ===');
       
       toast({
         title: "Kundali Generated Successfully",
-        description: "Your Vedic birth chart has been created with accurate planetary positions.",
+        description: missingKundaliData.length > 0 
+          ? "Your Vedic birth chart has been created with available data."
+          : "Your Vedic birth chart has been created with complete planetary positions.",
       });
 
     } catch (error: any) {
-      console.error('Error generating kundali:', error);
+      console.error('=== KUNDALI GENERATION ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Full error:', error);
+      
       const errorMessage = error.message || 'Failed to generate kundali';
-      setError(errorMessage);
+      setError(`Unable to generate kundali: ${errorMessage}`);
       
       toast({
         title: "Unable to Generate Kundali",
@@ -173,6 +224,7 @@ export const KundaliChart = () => {
       });
     } finally {
       setIsLoading(false);
+      console.log('=== KUNDALI GENERATION COMPLETE ===');
     }
   };
 

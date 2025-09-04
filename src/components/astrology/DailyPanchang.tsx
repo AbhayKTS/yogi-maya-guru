@@ -13,6 +13,7 @@ interface PanchangData {
   moonset: string;
   tithi: {
     name: string;
+    paksha?: string;
     endTime: string;
   };
   nakshatra: {
@@ -39,6 +40,7 @@ interface PanchangData {
     gulikai: string;
   };
   recommendations: string[];
+  data_status?: 'COMPLETE' | 'INCOMPLETE';
 }
 
 export const DailyPanchang = () => {
@@ -48,75 +50,148 @@ export const DailyPanchang = () => {
   const { toast } = useToast();
 
   const fetchPanchangData = async () => {
+    console.log('=== FRONTEND: FETCHING PANCHANG DATA ===');
     setIsLoading(true);
     setError('');
 
     try {
-      console.log('Fetching panchang data...');
+      console.log('Calling AstrologyAPI.getPanchang()...');
       const result = await AstrologyAPI.getPanchang();
       
-      console.log('Panchang API result:', result);
+      console.log('=== PANCHANG API RESPONSE RECEIVED ===');
+      console.log('Success status:', result.success);
+      console.log('Has data:', !!result.data);
       
       if (!result.success) {
+        console.error('API returned failure:', result.error);
         throw new Error(result.error || 'Failed to fetch panchang data');
       }
 
-      setPanchangData(result.data);
-      console.log('Panchang data set successfully');
-    } catch (error: any) {
-      console.error('Error fetching panchang:', error);
-      setError('Unable to load live panchang data. Showing cached information.');
+      if (!result.data) {
+        console.error('API success but no data returned');
+        throw new Error('No panchang data received from server');
+      }
+
+      // COMPREHENSIVE DATA VALIDATION
+      const data = result.data;
+      console.log('=== VALIDATING PANCHANG DATA ===');
+      console.log('Data keys present:', Object.keys(data));
+      console.log('Sunrise value:', data.sunrise, 'Type:', typeof data.sunrise);
+      console.log('Sunset value:', data.sunset, 'Type:', typeof data.sunset);
+      console.log('Tithi name:', data.tithi?.name, 'Type:', typeof data.tithi?.name);
+      console.log('Nakshatra name:', data.nakshatra?.name, 'Type:', typeof data.nakshatra?.name);
+      console.log('Data status:', data.data_status);
+
+      // Check for invalid time values
+      const timeFields = ['sunrise', 'sunset', 'moonrise', 'moonset'];
+      timeFields.forEach(field => {
+        const value = data[field];
+        if (value && (value.includes('12:34 AM') || value === 'Unknown' || value === 'undefined')) {
+          console.warn(`INVALID TIME DETECTED - ${field}: ${value}`);
+        }
+      });
+
+      // Check for critical missing data
+      const criticalFields = [
+        { key: 'sunrise', value: data.sunrise },
+        { key: 'tithi.name', value: data.tithi?.name },
+        { key: 'nakshatra.name', value: data.nakshatra?.name }
+      ];
+
+      const missingCritical = criticalFields.filter(field => 
+        !field.value || field.value === 'N/A' || field.value === 'Unknown' || field.value === 'undefined'
+      );
+
+      if (missingCritical.length > 0) {
+        console.warn('=== CRITICAL DATA MISSING ===');
+        missingCritical.forEach(field => {
+          console.warn(`Missing: ${field.key} = ${field.value}`);
+        });
+        setError('Some panchang data is incomplete or unavailable.');
+      } else {
+        console.log('=== ALL CRITICAL DATA PRESENT ===');
+      }
+
+      // Set the data regardless - let user see what we have
+      setPanchangData(data);
+      console.log('=== PANCHANG DATA STORED SUCCESSFULLY ===');
       
-      // Provide meaningful fallback data
+      toast({
+        title: "Panchang Updated",
+        description: data.data_status === 'INCOMPLETE' 
+          ? "Partial cosmic data loaded successfully"
+          : "Complete cosmic data loaded successfully",
+      });
+
+    } catch (error: any) {
+      console.error('=== PANCHANG FETCH ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Full error:', error);
+      
+      const errorMessage = error.message || 'Unable to fetch panchang data';
+      setError(`Connection issue: ${errorMessage}`);
+      
+      // Provide meaningful fallback data with clear indication it's fallback
       const today = new Date();
       const fallbackData: PanchangData = {
-        date: today.toLocaleDateString('en-US', { 
+        date: today.toLocaleDateString('en-IN', { 
           weekday: 'long', 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         }),
-        sunrise: '06:15 AM',
-        sunset: '06:30 PM',
-        moonrise: '08:45 PM',
-        moonset: '07:20 AM',
+        sunrise: 'Service Unavailable',
+        sunset: 'Service Unavailable',
+        moonrise: 'Service Unavailable',
+        moonset: 'Service Unavailable',
         tithi: {
-          name: 'Dwadashi',
-          endTime: '04:00 PM'
+          name: 'Service Temporarily Unavailable',
+          paksha: 'Please try again',
+          endTime: 'N/A'
         },
         nakshatra: {
-          name: 'Uttara Ashadha',
-          lord: 'Sun',
-          endTime: '11:43 PM'
+          name: 'Service Temporarily Unavailable',
+          lord: 'Please try again later',
+          endTime: 'N/A'
         },
         yoga: {
-          name: 'Saubhagya',
-          endTime: '03:20 PM'
+          name: 'Service Temporarily Unavailable',
+          endTime: 'N/A'
         },
         karana: {
-          name: 'Bava',
-          endTime: '04:20 PM'
+          name: 'Service Temporarily Unavailable',
+          endTime: 'N/A'
         },
         auspiciousTimes: {
-          abhijitMuhurta: '11:48 AM - 12:36 PM',
-          brahmaMuhurta: '04:30 AM - 05:18 AM',
-          godhuliBela: '06:00 PM - 06:24 PM'
+          abhijitMuhurta: 'Service temporarily offline',
+          brahmaMuhurta: 'Service temporarily offline',
+          godhuliBela: 'Service temporarily offline'
         },
         inauspiciousTimes: {
-          rahukaal: '02:00 PM - 03:30 PM',
-          yamaghanta: '08:00 AM - 09:30 AM',
-          gulikai: '10:30 AM - 12:00 PM'
+          rahukaal: 'Service temporarily offline',
+          yamaghanta: 'Service temporarily offline',
+          gulikai: 'Service temporarily offline'
         },
         recommendations: [
-          'Good day for spiritual practices and meditation',
-          'Favorable for starting new ventures during auspicious times',
-          'Avoid important decisions during inauspicious periods'
-        ]
+          'Panchang service is temporarily unavailable due to connection issues',
+          'Please check your internet connection and try refreshing',
+          'Traditional panchang principles still apply - consult local sources if needed'
+        ],
+        data_status: 'INCOMPLETE'
       };
       
       setPanchangData(fallbackData);
+      
+      toast({
+        title: "Panchang Service Issue",
+        description: "Using cached data. Please try refreshing in a moment.",
+        variant: "destructive"
+      });
+      
     } finally {
       setIsLoading(false);
+      console.log('=== PANCHANG FETCH COMPLETE ===');
     }
   };
 

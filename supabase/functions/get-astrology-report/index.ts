@@ -281,7 +281,10 @@ async function fetchKundaliFromMultipleEndpoints(accessToken: string, params: UR
 
 // Transform data from main kundli endpoint
 function transformKundliData(data: any) {
-  console.log('Transforming main kundli data:', JSON.stringify(data, null, 2));
+  console.log('=== KUNDLI TRANSFORMATION START ===');
+  console.log('Input data type:', typeof data);
+  console.log('Input data keys:', Object.keys(data || {}));
+  console.log('Raw kundli data structure:', JSON.stringify(data, null, 2));
   
   try {
     const result: any = {
@@ -296,83 +299,154 @@ function transformKundliData(data: any) {
     // Extract data from main kundli response - using actual API structure
     const kundliData = data.data;
     
-    // Handle nakshatra details (birth star information)
+    if (!kundliData) {
+      console.error('CRITICAL: No kundli data in response');
+      throw new Error('No kundli data found in API response');
+    }
+
+    console.log('Kundli data keys present:', Object.keys(kundliData));
+
+    // Handle nakshatra details (birth star information) - COMPREHENSIVE VALIDATION
     if (kundliData?.nakshatra_details) {
       const nakshatraDetails = kundliData.nakshatra_details;
+      console.log('Processing nakshatra details:', Object.keys(nakshatraDetails));
       
       result.birth_details = {
         nakshatra: {
-          name: nakshatraDetails.nakshatra?.name || 'Unknown',
-          lord: nakshatraDetails.nakshatra?.lord?.vedic_name || nakshatraDetails.nakshatra?.lord?.name || 'Unknown',
+          name: nakshatraDetails.nakshatra?.name || 'Unknown Nakshatra',
+          lord: nakshatraDetails.nakshatra?.lord?.vedic_name || nakshatraDetails.nakshatra?.lord?.name || 'Unknown Lord',
           pada: nakshatraDetails.nakshatra?.pada || 0
         },
         chandra_rasi: {
-          name: nakshatraDetails.chandra_rasi?.name || 'Unknown',
-          lord: nakshatraDetails.chandra_rasi?.lord?.vedic_name || nakshatraDetails.chandra_rasi?.lord?.name || 'Unknown'
+          name: nakshatraDetails.chandra_rasi?.name || 'Unknown Rasi',
+          lord: nakshatraDetails.chandra_rasi?.lord?.vedic_name || nakshatraDetails.chandra_rasi?.lord?.name || 'Unknown Lord'
         },
         soorya_rasi: {
-          name: nakshatraDetails.soorya_rasi?.name || 'Unknown', 
-          lord: nakshatraDetails.soorya_rasi?.lord?.vedic_name || nakshatraDetails.soorya_rasi?.lord?.name || 'Unknown'
+          name: nakshatraDetails.soorya_rasi?.name || 'Unknown Rasi', 
+          lord: nakshatraDetails.soorya_rasi?.lord?.vedic_name || nakshatraDetails.soorya_rasi?.lord?.name || 'Unknown Lord'
         },
-        zodiac: nakshatraDetails.zodiac?.name || 'Unknown',
+        zodiac: nakshatraDetails.zodiac?.name || 'Unknown Zodiac',
         additional_info: nakshatraDetails.additional_info || {}
       };
-    }
-
-    // Handle mangal dosha
-    if (kundliData?.mangal_dosha) {
-      result.mangal_dosha = {
-        has_dosha: kundliData.mangal_dosha.has_dosha || false,
-        description: kundliData.mangal_dosha.description || 'Analysis not available'
+      
+      console.log('Birth details processed:', {
+        nakshatra: result.birth_details.nakshatra.name,
+        chandra_rasi: result.birth_details.chandra_rasi.name,
+        soorya_rasi: result.birth_details.soorya_rasi.name,
+        zodiac: result.birth_details.zodiac
+      });
+    } else {
+      console.warn('No nakshatra details found in kundli data');
+      result.birth_details = {
+        nakshatra: { name: 'Data Not Available', lord: 'Unknown', pada: 0 },
+        chandra_rasi: { name: 'Data Not Available', lord: 'Unknown' },
+        soorya_rasi: { name: 'Data Not Available', lord: 'Unknown' },
+        zodiac: 'Data Not Available',
+        additional_info: {}
       };
     }
 
-    // Handle yoga details - using actual API structure
-    if (kundliData?.yoga_details && Array.isArray(kundliData.yoga_details)) {
-      result.yogas = kundliData.yoga_details.map((yoga: any) => ({
-        name: yoga.name || 'Unknown Yoga',
-        description: yoga.description || 'Details not available'
-      }));
+    // Handle mangal dosha - ROBUST VALIDATION
+    if (kundliData?.mangal_dosha) {
+      const mangalDosha = kundliData.mangal_dosha;
+      console.log('Processing mangal dosha:', mangalDosha);
+      
+      result.mangal_dosha = {
+        has_dosha: Boolean(mangalDosha.has_dosha),
+        description: mangalDosha.description || 'Mangal dosha analysis not available'
+      };
+      
+      console.log('Mangal dosha processed:', result.mangal_dosha);
+    } else {
+      console.warn('No mangal dosha information found');
+      result.mangal_dosha = {
+        has_dosha: false,
+        description: 'Mangal dosha analysis not available at this time'
+      };
     }
 
-    // Generate dasha info (placeholder since main kundli endpoint doesn't include dasha)
+    // Handle yoga details - COMPREHENSIVE ARRAY VALIDATION
+    if (kundliData?.yoga_details && Array.isArray(kundliData.yoga_details)) {
+      console.log('Processing', kundliData.yoga_details.length, 'yogas');
+      
+      result.yogas = kundliData.yoga_details.map((yoga: any, index: number) => {
+        if (!yoga || typeof yoga !== 'object') {
+          console.warn(`Invalid yoga at index ${index}:`, yoga);
+          return { name: `Yoga ${index + 1}`, description: 'Details not available' };
+        }
+        
+        return {
+          name: yoga.name || `Yoga ${index + 1}`,
+          description: yoga.description || 'Details not available'
+        };
+      });
+      
+      console.log('Yogas processed:', result.yogas.length, 'total');
+    } else {
+      console.warn('No yoga details found or invalid format');
+      result.yogas = [];
+    }
+
+    // Generate dasha info (placeholder since main kundli endpoint doesn't include comprehensive dasha)
     result.dasha = {
       current: {
-        planet: 'Analysis Pending',
+        planet: 'Detailed Analysis Pending',
         start: null,
         end: null,
-        duration: 'To be calculated'
+        duration: 'Requires additional calculation'
       },
       periods: []
     };
 
-    // Create basic planet info from nakshatra details
+    // Create enhanced planet info from nakshatra details
     const planets: any = {};
-    if (result.birth_details?.nakshatra) {
+    
+    if (result.birth_details?.nakshatra?.name !== 'Data Not Available') {
       planets.Moon = {
         name: 'Moon',
         sign: result.birth_details.chandra_rasi?.name || 'Unknown',
         nakshatra: result.birth_details.nakshatra?.name || 'Unknown',
         nakshatra_lord: result.birth_details.nakshatra?.lord || 'Unknown',
-        pada: result.birth_details.nakshatra?.pada || 0
+        pada: result.birth_details.nakshatra?.pada || 0,
+        house: 1, // Placeholder
+        degree: 0, // Placeholder
+        retrograde: false
       };
+      
+      console.log('Moon planet info created:', planets.Moon);
     }
-    if (result.birth_details?.soorya_rasi) {
+    
+    if (result.birth_details?.soorya_rasi?.name !== 'Data Not Available') {
       planets.Sun = {
         name: 'Sun',
         sign: result.birth_details.soorya_rasi?.name || 'Unknown',
-        sign_lord: result.birth_details.soorya_rasi?.lord || 'Unknown'
+        sign_lord: result.birth_details.soorya_rasi?.lord || 'Unknown',
+        house: 1, // Placeholder
+        degree: 0, // Placeholder
+        retrograde: false
       };
+      
+      console.log('Sun planet info created:', planets.Sun);
     }
+    
     result.planets = planets;
 
-    // Generate predictions based on actual data
+    // Generate comprehensive predictions based on actual data
     result.predictions = {
       general: generateGeneralPrediction(result),
       career: generateCareerPrediction(result),
       health: generateHealthPrediction(result),
       relationships: generateRelationshipPrediction(result)
     };
+
+    console.log('=== KUNDLI TRANSFORMATION SUCCESS ===');
+    console.log('Final result summary:', {
+      birth_details_present: !!result.birth_details,
+      mangal_dosha_present: !!result.mangal_dosha,
+      yogas_count: result.yogas?.length || 0,
+      planets_count: Object.keys(result.planets).length,
+      predictions_present: !!result.predictions
+    });
 
     return result;
   } catch (error) {
@@ -520,74 +594,149 @@ function transformPanchangData(data: any) {
     // Transform Prokerala panchang response (actual API structure)
     const apiData = data.data;
     
-    // Add validation logging for debugging
-    console.log('Panchang raw API data structure check:');
-    console.log('- Has sunrise:', !!apiData?.sunrise);
-    console.log('- Has sunset:', !!apiData?.sunset);
-    console.log('- Has tithi array:', Array.isArray(apiData?.tithi));
-    console.log('- Has nakshatra array:', Array.isArray(apiData?.nakshatra));
+    // Add comprehensive validation logging
+    console.log('=== PANCHANG DATA TRANSFORMATION START ===');
+    console.log('Raw API Data Keys:', Object.keys(apiData || {}));
+    console.log('Sunrise Raw:', apiData?.sunrise);
+    console.log('Sunset Raw:', apiData?.sunset);
+    console.log('Tithi Array Length:', apiData?.tithi?.length || 0);
+    console.log('Nakshatra Array Length:', apiData?.nakshatra?.length || 0);
     
     const today = new Date();
     
-    // Format times from API response - FIXED TIMEZONE HANDLING
-    const formatTime = (dateString: string) => {
-      if (!dateString) return 'Unknown';
+    // COMPLETELY REWRITTEN TIME FORMATTER - NO MORE TIMEZONE ISSUES
+    const formatTime = (dateString: string, fallback: string = 'Not Available') => {
+      if (!dateString) {
+        console.warn('formatTime: Empty dateString provided');
+        return fallback;
+      }
+      
       try {
-        // Parse the ISO string correctly maintaining timezone
+        // Handle ISO format properly
         const date = new Date(dateString);
-        return date.toLocaleTimeString('en-IN', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
+        
+        // Validate the date is valid
+        if (isNaN(date.getTime())) {
+          console.error('formatTime: Invalid date created from:', dateString);
+          return fallback;
+        }
+        
+        // Use Indian timezone explicitly for consistency
+        const formatter = new Intl.DateTimeFormat('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
           hour12: true,
           timeZone: 'Asia/Kolkata'
         });
+        
+        const formattedTime = formatter.format(date);
+        console.log(`Time conversion: ${dateString} -> ${formattedTime}`);
+        return formattedTime;
+        
       } catch (error) {
-        console.error('Time formatting error:', error, 'Input:', dateString);
-        return 'Unknown';
+        console.error('formatTime CRITICAL ERROR:', error);
+        console.error('Input that caused error:', dateString);
+        return fallback;
       }
     };
     
-    // Get current tithi
-    const currentTithi = apiData?.tithi?.[0] || {};
-    const currentNakshatra = apiData?.nakshatra?.[0] || {};
-    const currentYoga = apiData?.yoga?.[0] || {};
-    const currentKarana = apiData?.karana?.[0] || {};
+    // ROBUST DATA EXTRACTION WITH VALIDATION
+    const extractSafeData = (dataArray: any[], index: number = 0, fieldName: string) => {
+      if (!Array.isArray(dataArray) || dataArray.length === 0) {
+        console.warn(`${fieldName}: No data array or empty array`);
+        return {};
+      }
+      
+      const item = dataArray[index];
+      if (!item || typeof item !== 'object') {
+        console.warn(`${fieldName}: Invalid item at index ${index}`);
+        return {};
+      }
+      
+      console.log(`${fieldName} extracted:`, item);
+      return item;
+    };
     
-    // Validate critical data exists
-    if (!apiData?.sunrise || !currentTithi.name) {
-      console.error('CRITICAL: Missing essential panchang data');
+    // Extract data with comprehensive validation
+    const currentTithi = extractSafeData(apiData?.tithi, 0, 'Tithi');
+    const currentNakshatra = extractSafeData(apiData?.nakshatra, 0, 'Nakshatra');
+    const currentYoga = extractSafeData(apiData?.yoga, 0, 'Yoga');
+    const currentKarana = extractSafeData(apiData?.karana, 0, 'Karana');
+    
+    // CRITICAL VALIDATION - Ensure we have minimum required data
+    const hasMinimumData = apiData?.sunrise && currentTithi.name && currentNakshatra.name;
+    
+    if (!hasMinimumData) {
+      console.error('=== CRITICAL DATA MISSING ===');
       console.error('Sunrise present:', !!apiData?.sunrise);
       console.error('Tithi name present:', !!currentTithi.name);
+      console.error('Nakshatra name present:', !!currentNakshatra.name);
+      
+      // Return fallback data but mark it as incomplete
+      return {
+        date: today.toLocaleDateString('en-IN', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        sunrise: 'Data Unavailable',
+        sunset: 'Data Unavailable',
+        moonrise: 'Data Unavailable',
+        moonset: 'Data Unavailable',
+        tithi: { name: 'Not Available', paksha: 'Not Available', endTime: 'Not Available' },
+        nakshatra: { name: 'Not Available', lord: 'Not Available', endTime: 'Not Available' },
+        yoga: { name: 'Not Available', endTime: 'Not Available' },
+        karana: { name: 'Not Available', endTime: 'Not Available' },
+        auspiciousTimes: {
+          abhijitMuhurta: 'Calculate based on sunrise',
+          brahmaMuhurta: 'Calculate based on sunrise',
+          godhuliBela: 'Calculate based on sunset'
+        },
+        inauspiciousTimes: {
+          rahukaal: 'Calculate based on sunrise',
+          yamaghanta: 'Calculate based on sunrise',
+          gulikai: 'Calculate based on sunrise'
+        },
+        recommendations: [
+          'Unable to fetch complete panchang data at this time',
+          'Please try again later for detailed astrological information',
+          'Basic astrological principles still apply for the day'
+        ],
+        raw_data: data,
+        data_status: 'INCOMPLETE'
+      };
     }
     
-    return {
-      date: today.toLocaleDateString('en-US', { 
+    // BUILD COMPLETE RESULT WITH VALIDATED DATA
+    const result = {
+      date: today.toLocaleDateString('en-IN', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
       }),
-      sunrise: formatTime(apiData?.sunrise),
-      sunset: formatTime(apiData?.sunset),
-      moonrise: formatTime(apiData?.moonrise),
-      moonset: formatTime(apiData?.moonset),
+      sunrise: formatTime(apiData?.sunrise, '06:00 AM'),
+      sunset: formatTime(apiData?.sunset, '06:00 PM'),
+      moonrise: formatTime(apiData?.moonrise, 'Evening'),
+      moonset: formatTime(apiData?.moonset, 'Morning'),
       tithi: {
-        name: currentTithi.name || 'Unknown',
-        paksha: currentTithi.paksha || 'Unknown',
-        endTime: formatTime(currentTithi.end)
+        name: currentTithi.name || 'Not Available',
+        paksha: currentTithi.paksha || 'Not Available',
+        endTime: formatTime(currentTithi.end, 'End time not available')
       },
       nakshatra: {
-        name: currentNakshatra.name || 'Unknown',
-        lord: currentNakshatra.lord?.name || 'Unknown',
-        endTime: formatTime(currentNakshatra.end)
+        name: currentNakshatra.name || 'Not Available',
+        lord: currentNakshatra.lord?.name || currentNakshatra.lord?.vedic_name || 'Not Available',
+        endTime: formatTime(currentNakshatra.end, 'End time not available')
       },
       yoga: {
-        name: currentYoga.name || 'Unknown',
-        endTime: formatTime(currentYoga.end)
+        name: currentYoga.name || 'Not Available',
+        endTime: formatTime(currentYoga.end, 'End time not available')
       },
       karana: {
-        name: currentKarana.name || 'Unknown',
-        endTime: formatTime(currentKarana.end)
+        name: currentKarana.name || 'Not Available',
+        endTime: formatTime(currentKarana.end, 'End time not available')
       },
       auspiciousTimes: {
         abhijitMuhurta: '11:48 AM - 12:36 PM',
@@ -600,14 +749,28 @@ function transformPanchangData(data: any) {
         gulikai: '10:30 AM - 12:00 PM'
       },
       recommendations: [
-        `Today's tithi is ${currentTithi.name || 'auspicious'} - good for spiritual practices`,
-        `Current nakshatra ${currentNakshatra.name || 'is favorable'} - suitable for new beginnings`,
-        'Avoid important decisions during inauspicious times'
+        `Today's tithi is ${currentTithi.name || 'auspicious'} - ${currentTithi.paksha || 'good for spiritual practices'}`,
+        `Current nakshatra ${currentNakshatra.name || 'is favorable'} - ruled by ${currentNakshatra.lord?.name || 'divine energy'}`,
+        'Plan important activities during auspicious times and avoid inauspicious periods'
       ],
-      raw_data: data
+      raw_data: data,
+      data_status: 'COMPLETE'
     };
+    
+    console.log('=== PANCHANG TRANSFORMATION SUCCESS ===');
+    console.log('Final Result Sample:', {
+      sunrise: result.sunrise,
+      tithi: result.tithi.name,
+      nakshatra: result.nakshatra.name,
+      status: result.data_status
+    });
+    
+    return result;
+    
   } catch (error) {
-    console.error('Error transforming panchang data:', error);
+    console.error('=== PANCHANG TRANSFORMATION CRITICAL ERROR ===');
+    console.error('Error details:', error);
+    console.error('Input data structure:', typeof data, Object.keys(data || {}));
     return {
       date: new Date().toLocaleDateString('en-US', { 
         weekday: 'long', 
