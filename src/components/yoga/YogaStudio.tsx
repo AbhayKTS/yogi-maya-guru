@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { YOGA_ASANAS, getRecommendedAsanas, YogaAsana } from '@/data/yogaAsanas';
-import { supabase } from '@/integrations/supabase/client';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
+import { saveYogaSession } from '@/utils/localStorage';
 import { YogaQuestionnaire, YogaProfile } from './YogaQuestionnaire';
 import { PersonalizedYogaCourses } from './PersonalizedYogaCourses';
 import { 

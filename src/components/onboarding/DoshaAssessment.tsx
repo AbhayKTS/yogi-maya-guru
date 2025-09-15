@@ -5,11 +5,11 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { DOSHA_QUESTIONS, calculateDoshaScores, getDominantDoshas } from '@/data/doshaQuestions';
 import { DOSHA_INFO, DoshaType } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
+import { saveDoshaResponse } from '@/utils/localStorage';
 import { ArrowLeft, ArrowRight, Sparkles, Wind, Flame, Mountain } from 'lucide-react';
 
 interface DoshaAssessmentProps {
@@ -22,7 +22,7 @@ export const DoshaAssessment = ({ onComplete }: DoshaAssessmentProps) => {
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<{ dominant: DoshaType; secondary: DoshaType; scores: any } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { updateProfile } = useAuth();
+  const { user, updateProfile } = useLocalAuth();
   const { toast } = useToast();
 
   const progress = ((currentQuestion + 1) / DOSHA_QUESTIONS.length) * 100;
@@ -54,34 +54,26 @@ export const DoshaAssessment = ({ onComplete }: DoshaAssessmentProps) => {
   };
 
   const handleComplete = async () => {
-    if (!results) return;
+    if (!results || !user) return;
     
     setIsSubmitting(true);
     
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      // Save dosha assessment responses
-      const responseEntries = Object.entries(responses).map(([questionId, answer]) => {
+      // Save dosha assessment responses locally
+      Object.entries(responses).forEach(([questionId, answer]) => {
         const question = DOSHA_QUESTIONS.find(q => q.id === parseInt(questionId));
-        return {
-          user_id: user.id,
-          question_id: parseInt(questionId),
-          answer_option: answer,
-          dosha_mapping: question?.options[answer].dosha as DoshaType
-        };
+        if (question) {
+          saveDoshaResponse({
+            user_id: user.id,
+            question_id: parseInt(questionId),
+            answer: answer
+          });
+        }
       });
-
-      for (const response of responseEntries) {
-        await supabase.from('dosha_assessment_responses').insert(response);
-      }
 
       // Update user profile with dosha results
       await updateProfile({
-        dominant_dosha: results.dominant,
-        secondary_dosha: results.secondary
+        dosha_type: results.dominant
       });
 
       toast({

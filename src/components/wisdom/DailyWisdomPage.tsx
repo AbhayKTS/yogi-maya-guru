@@ -3,10 +3,42 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Heart, Share2, Play, Info, BookOpen } from 'lucide-react';
 import { Shlok } from '@/types';
 import lotusMandalaBg from '@/assets/lotus-mandala.jpg';
+
+const MOCK_SHLOKS: Shlok[] = [
+  {
+    id: '1',
+    sanskrit_text: 'योगः कर्मसु कौशलम्',
+    transliteration: 'yogaḥ karmasu kauśalam',
+    translation: 'Yoga is skill in action',
+    source: 'Bhagavad Gita 2.50',
+    chapter_context: 'Lord Krishna teaches Arjuna about performing actions with skill and equanimity, without attachment to results.',
+    audio_url: null,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    sanskrit_text: 'सत्यमेव जयते नानृतम्',
+    transliteration: 'satyameva jayate nānṛtam',
+    translation: 'Truth alone triumphs, not falsehood',
+    source: 'Mundaka Upanishad 3.1.6',
+    chapter_context: 'This verse emphasizes the ultimate power of truth over deception and the importance of living with integrity.',
+    audio_url: null,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: '3',
+    sanskrit_text: 'अहिंसा परमो धर्मः',
+    transliteration: 'ahiṃsā paramo dharmaḥ',
+    translation: 'Non-violence is the highest virtue',
+    source: 'Mahabharata',
+    chapter_context: 'This teaching emphasizes compassion and kindness as fundamental principles of righteous living.',
+    audio_url: null,
+    created_at: new Date().toISOString()
+  }
+];
 
 export const DailyWisdomPage = () => {
   const [dailyShlok, setDailyShlok] = useState<Shlok | null>(null);
@@ -21,17 +53,19 @@ export const DailyWisdomPage = () => {
 
   const fetchDailyShlok = async () => {
     try {
-      // For now, get a random shlok. In production, you'd implement daily rotation logic
-      const { data, error } = await supabase
-        .from('shloks')
-        .select('*')
-        .limit(1)
-        .single();
-
-      if (error) throw error;
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      setDailyShlok(data);
-      await checkIfFavorited(data.id);
+      // Get a daily shlok based on date (same shlok for the same day)
+      const today = new Date().getDate();
+      const shlokIndex = today % MOCK_SHLOKS.length;
+      const selectedShlok = MOCK_SHLOKS[shlokIndex];
+      
+      setDailyShlok(selectedShlok);
+      
+      // Check if favorited from localStorage
+      const favorites = JSON.parse(localStorage.getItem('favoriteWisdom') || '[]');
+      setIsFavorited(favorites.includes(selectedShlok.id));
     } catch (error) {
       console.error('Error fetching daily shlok:', error);
       toast({
@@ -44,49 +78,26 @@ export const DailyWisdomPage = () => {
     }
   };
 
-  const checkIfFavorited = async (shlokId: string) => {
-    try {
-      const { data } = await supabase
-        .from('favorite_shloks')
-        .select('id')
-        .eq('shlok_id', shlokId)
-        .single();
-      
-      setIsFavorited(!!data);
-    } catch (error) {
-      // Not favorited or error - either way, set to false
-      setIsFavorited(false);
-    }
-  };
-
   const toggleFavorite = async () => {
     if (!dailyShlok) return;
 
     try {
+      const favorites = JSON.parse(localStorage.getItem('favoriteWisdom') || '[]');
+      
       if (isFavorited) {
-        const { error } = await supabase
-          .from('favorite_shloks')
-          .delete()
-          .eq('shlok_id', dailyShlok.id);
-        
-        if (error) throw error;
-        
+        const updatedFavorites = favorites.filter((id: string) => id !== dailyShlok.id);
+        localStorage.setItem('favoriteWisdom', JSON.stringify(updatedFavorites));
         setIsFavorited(false);
+        
         toast({
           title: "Removed from favorites",
           description: "Shlok removed from your collection"
         });
       } else {
-        const { error } = await supabase
-          .from('favorite_shloks')
-          .insert({
-            shlok_id: dailyShlok.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id
-          });
-        
-        if (error) throw error;
-        
+        favorites.push(dailyShlok.id);
+        localStorage.setItem('favoriteWisdom', JSON.stringify(favorites));
         setIsFavorited(true);
+        
         toast({
           title: "Added to favorites",
           description: "Shlok saved to your collection"

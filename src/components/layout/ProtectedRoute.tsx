@@ -1,4 +1,4 @@
-import { useAuth } from '@/hooks/useAuth';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { AuthPage } from '@/components/auth/AuthPage';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useLocalAuth();
 
   if (loading) {
     return (

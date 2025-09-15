@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { CalendarIcon, ClockIcon, MapPinIcon, Sparkles } from 'lucide-react';
 
 interface AstrologicalProfileProps {
@@ -13,7 +12,7 @@ interface AstrologicalProfileProps {
 }
 
 export const AstrologicalProfile = ({ onComplete }: AstrologicalProfileProps) => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useLocalAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,17 +39,11 @@ export const AstrologicalProfile = ({ onComplete }: AstrologicalProfileProps) =>
 
     try {
       // Save astrological data to profile
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          birth_date: formData.birthDate,
-          birth_time: formData.birthTime,
-          birth_place: formData.birthPlace,
-          birth_latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-          birth_longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user?.id);
+      const { error } = await updateProfile({
+        birth_date: formData.birthDate,
+        birth_time: formData.birthTime,
+        birth_place: formData.birthPlace,
+      });
 
       if (error) throw error;
 

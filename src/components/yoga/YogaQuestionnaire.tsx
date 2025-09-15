@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -8,7 +8,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
+import { saveYogaSession } from '@/utils/localStorage';
 import { 
   User, 
   Target, 
@@ -167,7 +168,7 @@ export const YogaQuestionnaire = ({ onComplete }: YogaQuestionnaireProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { updateProfile } = useLocalAuth();
   const { toast } = useToast();
 
   const progress = ((currentQuestion + 1) / QUESTIONS.length) * 100;
