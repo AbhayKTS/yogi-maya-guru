@@ -14,6 +14,9 @@ export interface LocalUserProfile {
   birth_time: string;
   birth_place: string;
   dosha_type: string;
+  dominant_dosha?: string;
+  secondary_dosha?: string;
+  yoga_profile?: any;
   sadhana_points: number;
   rank: string;
   created_at: string;

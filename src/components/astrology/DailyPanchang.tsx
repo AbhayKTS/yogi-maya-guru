@@ -113,7 +113,7 @@ export const DailyPanchang = () => {
       }
 
       // Set the data regardless - let user see what we have
-      setPanchangData(data);
+      setPanchangData(data as unknown as PanchangData);
       console.log('=== PANCHANG DATA STORED SUCCESSFULLY ===');
       
       toast({

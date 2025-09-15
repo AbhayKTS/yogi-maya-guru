@@ -6,7 +6,6 @@ import { Progress } from '@/components/ui/progress';
 import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { useToast } from '@/hooks/use-toast';
 import { YOGA_ASANAS, getRecommendedAsanas, YogaAsana } from '@/data/yogaAsanas';
-import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { saveYogaSession } from '@/utils/localStorage';
 import { YogaQuestionnaire, YogaProfile } from './YogaQuestionnaire';
 import { PersonalizedYogaCourses } from './PersonalizedYogaCourses';
@@ -41,7 +40,7 @@ export const YogaStudio = () => {
   const [feedback, setFeedback] = useState<string>('');
   const [isSessionComplete, setIsSessionComplete] = useState(false);
   
-  const { profile } = useAuth();
+  const { profile, updateProfile, user } = useLocalAuth();
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -62,7 +61,7 @@ export const YogaStudio = () => {
     setMode('practice');
   };
 
-  const dominantDosha = profile?.dominant_dosha || 'vata';
+  const dominantDosha = (profile?.dominant_dosha || 'vata') as 'vata' | 'pitta' | 'kapha';
   const recommendedAsanas = getRecommendedAsanas(dominantDosha, sessionGoal, difficulty);
 
   useEffect(() => {
@@ -118,24 +117,17 @@ export const YogaStudio = () => {
     const totalPoints = basePoints + accuracyBonus;
 
     try {
-      // Save yoga session to database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-      
-      await supabase.from('yoga_sessions').insert({
-        user_id: user.id,
-        session_type: selectedAsana.id,
-        duration_minutes: Math.floor(sessionTimer / 60),
-        accuracy_score: accuracyScore,
-        sadhana_points_earned: totalPoints
-      });
+      // Save yoga session locally
+      if (user && profile) {
+        saveYogaSession({
+          user_id: user.id,
+          duration: sessionTimer,
+          poses_completed: 1
+        });
 
-      // Update user's total sadhana points
-      if (profile) {
+        // Update user's total sadhana points locally
         const newTotalPoints = (profile.sadhana_points || 0) + totalPoints;
-        await supabase.from('profiles').update({
-          sadhana_points: newTotalPoints
-        }).eq('user_id', profile.user_id);
+        await updateProfile({ sadhana_points: newTotalPoints });
       }
 
       toast({

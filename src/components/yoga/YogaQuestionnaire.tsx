@@ -8,7 +8,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { saveYogaSession } from '@/utils/localStorage';
 import { 
   User, 
@@ -226,13 +225,10 @@ export const YogaQuestionnaire = ({ onComplete }: YogaQuestionnaireProps) => {
         stress_level: answers.stress
       };
 
-      // Save to database (you can create a yoga_profiles table)
-      if (user) {
-        await supabase.from('profiles').update({
-          yoga_profile: yogaProfile as any,
-          updated_at: new Date().toISOString()
-        }).eq('user_id', user.id);
-      }
+      // Save locally
+      await updateProfile({
+        yoga_profile: yogaProfile as any,
+      });
 
       toast({
         title: "Assessment Complete!",

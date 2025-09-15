@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useLocalAuth } from '@/hooks/useLocalAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -114,7 +114,7 @@ interface KundaliData {
 }
 
 export const KundaliChart = () => {
-  const { profile } = useAuth();
+  const { profile } = useLocalAuth();
   const { toast } = useToast();
   const [kundaliData, setKundaliData] = useState<KundaliData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -198,7 +198,7 @@ export const KundaliChart = () => {
       }
 
       // Use the transformed data from the API
-      setKundaliData(data);
+      setKundaliData(data as unknown as KundaliData);
       console.log('=== KUNDALI DATA STORED SUCCESSFULLY ===');
       
       toast({
